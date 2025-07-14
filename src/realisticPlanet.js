@@ -77,7 +77,10 @@ export class RealisticPlanet {
             map: texture,
             color: this.data.color,
             shininess: 10,
-            specular: 0x222222
+            specular: 0x222222,
+            side: THREE.FrontSide,
+            transparent: false,
+            alphaTest: 0.1
         });
         
         this.mesh = new THREE.Mesh(geometry, material);
@@ -113,7 +116,10 @@ export class RealisticPlanet {
             color: this.data.atmosphereColor || 0x87CEEB,
             transparent: true,
             opacity: 0.1,
-            side: THREE.BackSide
+            side: THREE.BackSide,
+            depthWrite: false,
+            depthTest: true,
+            blending: THREE.NormalBlending
         });
         
         this.atmosphere = new THREE.Mesh(atmosphereGeometry, atmosphereMaterial);
@@ -129,7 +135,10 @@ export class RealisticPlanet {
             color: this.data.ringColor || 0xC0C0C0,
             side: THREE.DoubleSide,
             transparent: true,
-            opacity: 0.7
+            opacity: 0.7,
+            depthWrite: false,
+            depthTest: true,
+            blending: THREE.NormalBlending
         });
         
         this.rings = new THREE.Mesh(ringGeometry, ringMaterial);
@@ -203,7 +212,10 @@ export class RealisticPlanet {
         const moonMaterial = new THREE.MeshPhongMaterial({
             color: moonData.color,
             shininess: 5,
-            specular: 0x111111
+            specular: 0x111111,
+            side: THREE.FrontSide,
+            transparent: false,
+            alphaTest: 0.1
         });
         
         if (moonData.texture) {
@@ -457,8 +469,8 @@ export class RealisticPlanet {
         }
     }
     
-    getInfo() {
-        return {
+    getInfo(camera = null, controls = null) {
+        const info = {
             name: this.data.name,
             size: this.data.size,
             mass: this.data.mass,
@@ -475,6 +487,17 @@ export class RealisticPlanet {
             hasRings: this.data.hasRings,
             moons: this.data.moons || []
         };
+        
+        // Agregar información de debug de la cámara
+        if (camera && this.group) {
+            info.cameraDistance = camera.position.distanceTo(this.group.position);
+        }
+        
+        if (controls) {
+            info.minDistance = controls.minDistance;
+        }
+        
+        return info;
     }
     
     dispose() {

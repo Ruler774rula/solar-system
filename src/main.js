@@ -75,7 +75,7 @@ class RealisticSolarSystem {
         this.controls = new OrbitControls(this.camera, this.renderer.domElement);
         this.controls.enableDamping = true;
         this.controls.dampingFactor = 0.05;
-        this.controls.minDistance = 0.1; // Permitir mucho más zoom in para planetas pequeños
+        this.controls.minDistance = 2.0; // Distancia mínima fija muy pequeña
         this.controls.maxDistance = 500; // Permitir alejar más la cámara
         this.controls.enablePan = true;
         this.controls.enableZoom = true;
@@ -234,9 +234,9 @@ class RealisticSolarSystem {
             } else if (intersectedObject.userData.parent) {
                 this.selectPlanet(intersectedObject.userData.parent);
             }
-        } else {
-            this.selectPlanet(null);
         }
+        // Removido: no deseleccionar planeta al hacer clic fuera
+        // La deselección solo ocurrirá desde la UI
     }
     
     onMouseMove(event) {
@@ -290,10 +290,26 @@ class RealisticSolarSystem {
         
         if (planet) {
             planet.setSelected(true);
+            
+            // Ajustar distancia mínima de la cámara basada en el planeta específico
+            const planetDistances = {
+                'Mercurio': 0.139,
+                'Venus': 0.199,
+                'Tierra': 0.209,
+                'Marte': 0.154
+            };
+            
+            const minDistance = planetDistances[planet.data.name] || Math.max(planet.size * 1.5, 0.5);
+            
+            this.controls.minDistance = minDistance;
+            
             if (this.ui) {
-                this.ui.updatePlanetInfo(planet.getInfo());
+                this.ui.updatePlanetInfo(planet.getInfo(this.camera, this.controls));
             }
         } else {
+            // Restaurar distancia mínima por defecto cuando no hay planeta seleccionado
+            this.controls.minDistance = 2.0;
+            
             if (this.ui) {
                 this.ui.clearPlanetInfo();
             }
@@ -308,12 +324,26 @@ class RealisticSolarSystem {
         
         // Reiniciar datos de seguimiento para el nuevo planeta
         if (planet) {
+            // Ajustar distancia mínima de la cámara basada en el planeta específico
+            const planetDistances = {
+                'Mercurio': 0.139,
+                'Venus': 0.199,
+                'Tierra': 0.209,
+                'Marte': 0.154
+            };
+            
+            const minDistance = planetDistances[planet.data.name] || Math.max(planet.size * 1.5, 0.5);
+            
+            this.controls.minDistance = minDistance;
+            
             this.followData = {
                 initialPlanetPos: planet.group.position.clone(),
                 initialCameraPos: this.camera.position.clone(),
                 initialTargetPos: this.controls.target.clone()
             };
         } else {
+            // Restaurar distancia mínima por defecto cuando se deja de seguir
+            this.controls.minDistance = 2.0;
             this.followData = null;
         }
         
@@ -326,6 +356,10 @@ class RealisticSolarSystem {
         this.followingPlanet = null;
         this.followData = null;
         this.controls.autoRotate = false; // Restaurar controles normales
+        
+        // Restaurar distancia mínima por defecto
+        this.controls.minDistance = 2.0;
+        
         if (this.ui) {
             this.ui.updateFollowingStatus(null);
         }

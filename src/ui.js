@@ -135,6 +135,14 @@ export class UI {
     }
     
     selectPlanet(planet) {
+        // Si el planeta ya está seleccionado, deseleccionarlo
+        if (this.simulator.selectedPlanet === planet) {
+            // Deseleccionar planeta
+            this.simulator.selectPlanet(null);
+            this.simulator.stopFollowing();
+            return;
+        }
+        
         // Actualizar selección visual en la lista
         const planetItems = this.elements.planetItems.querySelectorAll('.planet-item');
         planetItems.forEach(item => item.classList.remove('selected'));
@@ -155,7 +163,10 @@ export class UI {
         if (!this.elements.planetInfo || !planetInfo) return;
         
         const html = `
-            <h4>${planetInfo.name}</h4>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h4>${planetInfo.name}</h4>
+                <button class="ui-button" style="padding: 5px 10px; font-size: 12px;" onclick="window.solarSystem.ui.selectPlanet(window.solarSystem.selectedPlanet)">✕</button>
+            </div>
             <div class="info-grid">
                 <div class="info-item">
                     <div class="info-label">Tamaño</div>
@@ -205,6 +216,15 @@ export class UI {
                     <div class="info-label">Atmósfera</div>
                     <div class="info-value">${planetInfo.hasAtmosphere ? 'Sí' : 'No'}</div>
                 </div>
+                ${planetInfo.cameraDistance !== undefined ? `
+                <div class="info-item" style="background: rgba(255, 255, 0, 0.1); border: 1px solid #ffeb3b;">
+                    <div class="info-label">🔍 Dist. Cámara</div>
+                    <div class="info-value">${planetInfo.cameraDistance.toFixed(3)} unidades</div>
+                </div>
+                <div class="info-item" style="background: rgba(255, 255, 0, 0.1); border: 1px solid #ffeb3b;">
+                    <div class="info-label">🔍 Min Distance</div>
+                    <div class="info-value">${planetInfo.minDistance.toFixed(3)} unidades</div>
+                </div>` : ''}
             </div>
             
             ${planetInfo.hasRings ? '<div class="info-item"><strong>Tiene anillos</strong></div>' : ''}
@@ -294,7 +314,7 @@ export class UI {
     update() {
         // Actualizar información en tiempo real si es necesario
         if (this.simulator.selectedPlanet) {
-            this.updatePlanetInfo(this.simulator.selectedPlanet.getInfo());
+            this.updatePlanetInfo(this.simulator.selectedPlanet.getInfo(this.simulator.camera, this.simulator.controls));
         }
     }
     
