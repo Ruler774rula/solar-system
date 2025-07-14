@@ -25,17 +25,18 @@ function getNebula({
   radius = 1,
   sat = 0.5,
   size = 1,
+  x = 0,
   z = 0,
 }) {
   const layerGroup = new THREE.Group();
   for (let i = 0; i < numSprites; i += 1) {
     let angle = (i / numSprites) * Math.PI * 2;
     const pos = new THREE.Vector3(
-      Math.cos(angle) * Math.random() * radius,
+      x + Math.cos(angle) * Math.random() * radius,
       Math.sin(angle) * Math.random() * radius,
       z + Math.random()
     );
-    const length = new THREE.Vector3(pos.x, pos.y, 0).length();
+    const length = new THREE.Vector3(pos.x - x, pos.y, 0).length();
     // const hue = 0.0; // (0.9 - (radius - length) / radius) * 1;
 
     let color = new THREE.Color().setHSL(hue, 1, sat);

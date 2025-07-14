@@ -86,25 +86,7 @@ function initScene(data) {
   dirLight.position.set(0, 1, 0);
   scene.add(dirLight);
 
-  const nebula = getNebula({
-    hue: 0.6,
-    numSprites: 10,
-    opacity: 0.2,
-    radius: 40,
-    size: 80,
-    z: -50.5,
-  });
-  scene.add(nebula);
-
-  const anotherNebula = getNebula({
-    hue: 0.0,
-    numSprites: 10,
-    opacity: 0.2,
-    radius: 40,
-    size: 80,
-    z: 50.5,
-  });
-  scene.add(anotherNebula);
+  // Nebulosas centrales eliminadas para mejor visibilidad del sistema solar
 
   const cameraDistance = 5;
   function animate(t = 0) {

@@ -1,18 +1,20 @@
 import * as THREE from 'three';
 
 function getInstanced({ distance, mesh, size }) {
-    const numObjs = 25 + Math.floor(Math.random() * 25);
+    const numObjs = 30 + Math.floor(Math.random() * 40); // Aumentar cantidad de asteroides (30-70)
     const instaMesh = new THREE.InstancedMesh(mesh.geometry, mesh.material, numObjs);
     const matrix = new THREE.Matrix4();
     for (let i = 0; i < numObjs; i += 1) {
-        const radius = distance + Math.random() * 0.1 - 0.05;
+        // Distribuir en un rango más amplio entre Marte y Júpiter
+        const radius = distance + Math.random() * 12 - 6; // Rango más amplio
         const angle = Math.random() * Math.PI * 2;
         const x = Math.cos(angle) * radius;
         const z = Math.sin(angle) * radius;
-        const position = new THREE.Vector3(x, 0, z);
+        const y = (Math.random() - 0.5) * 2; // Añadir dispersión vertical
+        const position = new THREE.Vector3(x, y, z);
         const quaternion = new THREE.Quaternion();
         quaternion.random();
-        const currentSize = size + Math.random() * 0.05 - 0.025;
+        const currentSize = size + Math.random() * 0.06 - 0.03; // Tamaño más grande
         const scale = new THREE.Vector3().setScalar(currentSize);
         matrix.compose(position, quaternion, scale);
         instaMesh.setMatrixAt(i, matrix);
@@ -28,7 +30,8 @@ function getInstanced({ distance, mesh, size }) {
 function getAsteroidBelt(objs) {
     const group = new THREE.Group();
     objs.forEach((obj) => {
-        const asteroids = getInstanced({ distance: 2.5, mesh: obj, size: 0.035 });
+        // Posicionar entre Marte (15.24) y Júpiter (52.04) en escala 10x
+        const asteroids = getInstanced({ distance: 28, mesh: obj, size: 0.08 }); // Más grandes
         group.add(asteroids);
     });
     return group;
