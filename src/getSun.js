@@ -37,7 +37,9 @@ function getCorona() {
 function getSun() {
     
     const sunMat = new THREE.MeshStandardMaterial({
-        emissive: 0xff0000,
+        emissive: 0xff4400,
+        emissiveIntensity: 2.0,
+        color: 0xffaa00,
     });
     const geo = new THREE.IcosahedronGeometry(1, 6);
     const sun = new THREE.Mesh(geo, sunMat);
@@ -50,8 +52,11 @@ function getSun() {
     const coronaMesh = getCorona();
     sun.add(coronaMesh);
 
-    const sunLight = new THREE.PointLight(0xffff99, 10);
-    sun.add(sunLight);
+    // Luz interna del Sol sin atenuación por distancia
+  const sunLight = new THREE.PointLight(0xffff99, 8, 0); // distance = 0 elimina atenuación
+  sunLight.position.set(0, 0, 0);
+  sunLight.decay = 0; // Sin decaimiento de luz
+  sun.add(sunLight);
     sun.userData.update = (t) => {
         sun.rotation.y = t;
         coronaMesh.userData.update(t);

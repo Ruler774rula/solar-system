@@ -37,7 +37,7 @@ class RealisticSolarSystem {
         this.showOrbits = true;
         this.showLabels = true;
         this.showTrails = false;
-        this.realisticScale = false;
+        this.realisticScale = true;
         
         // Raycaster para selección
         this.raycaster = new THREE.Raycaster();
@@ -75,8 +75,8 @@ class RealisticSolarSystem {
         this.controls = new OrbitControls(this.camera, this.renderer.domElement);
         this.controls.enableDamping = true;
         this.controls.dampingFactor = 0.05;
-        this.controls.minDistance = 2;
-        this.controls.maxDistance = 300; // Permitir alejar más la cámara
+        this.controls.minDistance = 0.1; // Permitir mucho más zoom in para planetas pequeños
+        this.controls.maxDistance = 500; // Permitir alejar más la cámara
         this.controls.enablePan = true;
         this.controls.enableZoom = true;
     }
@@ -174,31 +174,36 @@ class RealisticSolarSystem {
     }
     
     setupLighting() {
-        // Luz ambiental suave para ver texturas lejanas
-        this.ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+        // Luz ambiental reducida para permitir sombras más visibles
+        this.ambientLight = new THREE.AmbientLight(0x404040, 0.4);
         this.scene.add(this.ambientLight);
         
-        // Luz direccional del Sol más realista
+        // Luz direccional del Sol con intensidad reducida
         this.sunLight = new THREE.DirectionalLight(0xffffff, 4.0);
         this.sunLight.position.set(0, 0, 0);
         this.sunLight.castShadow = true;
         this.sunLight.shadow.mapSize.width = 4096;
         this.sunLight.shadow.mapSize.height = 4096;
         this.sunLight.shadow.camera.near = 0.1;
-        this.sunLight.shadow.camera.far = 2000;
-        this.sunLight.shadow.camera.left = -500;
-        this.sunLight.shadow.camera.right = 500;
-        this.sunLight.shadow.camera.top = 500;
-        this.sunLight.shadow.camera.bottom = -500;
+        this.sunLight.shadow.camera.far = 8000;
+        this.sunLight.shadow.camera.left = -800;
+        this.sunLight.shadow.camera.right = 800;
+        this.sunLight.shadow.camera.top = 800;
+        this.sunLight.shadow.camera.bottom = -800;
         this.scene.add(this.sunLight);
         
-        // Luz puntual en el Sol para iluminación realista
-        this.pointLight = new THREE.PointLight(0xffffff, 5.0, 2000);
+        // Luz puntual en el Sol sin atenuación por distancia para iluminación uniforme
+        this.pointLight = new THREE.PointLight(0xffffff, 8.0, 0); // distance = 0 elimina atenuación
         this.pointLight.position.set(0, 0, 0);
         this.pointLight.castShadow = true;
         this.pointLight.shadow.mapSize.width = 4096;
         this.pointLight.shadow.mapSize.height = 4096;
+        this.pointLight.decay = 0; // Sin decaimiento de luz
         this.scene.add(this.pointLight);
+        
+        // Luz adicional suave para iluminar las caras de los planetas sin lavar las sombras
+        this.hemisphereLight = new THREE.HemisphereLight(0xffffbb, 0x080820, 0.2);
+        this.scene.add(this.hemisphereLight);
     }
     
     createNebulas() {
@@ -298,6 +303,9 @@ class RealisticSolarSystem {
     followPlanet(planet) {
         this.followingPlanet = planet;
         
+        // Resetear la posición anterior para forzar reposicionamiento inicial
+        this.lastPlanetPosition.set(0, 0, 0);
+        
         // Reiniciar datos de seguimiento para el nuevo planeta
         if (planet) {
             this.followData = {
@@ -384,22 +392,33 @@ class RealisticSolarSystem {
     
     updateCameraFollow() {
         if (this.followingPlanet && !this.isPaused) {
+            const currentPlanetPosition = this.followingPlanet.group.position;
+            
             if (this.lastPlanetPosition.lengthSq() === 0) {
-                // First frame, just set the last position
-                this.lastPlanetPosition.copy(this.followingPlanet.group.position);
+                // Primera vez siguiendo este planeta
+                this.lastPlanetPosition.copy(currentPlanetPosition);
+                
+                // Posicionar la cámara a una distancia apropiada del planeta
+                const planetSize = this.followingPlanet.size;
+                const distance = Math.max(planetSize * 3, 0.5); // Distancia mínima reducida para planetas pequeños
+                
+                const direction = new THREE.Vector3(1, 0.5, 1).normalize();
+                this.camera.position.copy(currentPlanetPosition).add(direction.multiplyScalar(distance));
+                this.controls.target.copy(currentPlanetPosition);
             } else {
-                const currentPlanetPosition = this.followingPlanet.group.position;
+                // Seguir el movimiento del planeta suavemente
                 const delta = new THREE.Vector3().subVectors(currentPlanetPosition, this.lastPlanetPosition);
                 
-                // Move the camera by the same amount the planet moved
+                // Mover la cámara y el target de los controles
                 this.camera.position.add(delta);
+                this.controls.target.add(delta);
                 
-                // Update the controls target to the new planet position
-                this.controls.target.copy(currentPlanetPosition);
-                
-                // Store the new position for the next frame
+                // Actualizar la posición anterior
                 this.lastPlanetPosition.copy(currentPlanetPosition);
             }
+            
+            // Asegurar que los controles se actualicen
+            this.controls.update();
         }
     }
     

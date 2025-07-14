@@ -48,7 +48,6 @@ export class UI {
             showOrbits: document.getElementById('show-orbits'),
             showLabels: document.getElementById('show-labels'),
             showTrails: document.getElementById('show-trails'),
-            realisticScale: document.getElementById('realistic-scale'),
             exportDataBtn: document.getElementById('export-data-btn'),
             screenshotBtn: document.getElementById('screenshot-btn'),
             planetInfo: document.getElementById('planet-info'),
@@ -99,10 +98,6 @@ export class UI {
         
         this.elements.showTrails.addEventListener('change', (e) => {
             this.simulator.toggleTrails();
-        });
-        
-        this.elements.realisticScale.addEventListener('change', (e) => {
-            this.simulator.setRealisticScale(e.target.checked);
         });
         
         // Herramientas
