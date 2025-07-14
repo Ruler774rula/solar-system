@@ -29,9 +29,9 @@ export class UI {
     setDefaultValues() {
         // Configurar velocidad por defecto a 1.0x con velocidad moderada
         if (this.elements.timeScale) {
-            this.elements.timeScale.value = 1.0;
-            this.elements.timeScaleValue.textContent = '1.0x';
-            this.simulator.setTimeScale(0.05); // Velocidad por defecto más lenta pero visible
+            this.elements.timeScale.value = 0.001;
+            this.elements.timeScaleValue.textContent = '0.001x';
+            this.simulator.setTimeScale(0.0001); // Velocidad por defecto aún más lenta
         }
     }
     
@@ -76,15 +76,21 @@ export class UI {
             const value = parseFloat(e.target.value);
             // Mapear el rango del slider (0.1-5.0) a velocidades apropiadas
             let actualSpeed;
-            if (value <= 1.0) {
-                // Para valores de 0.1 a 1.0, mapear a velocidades muy lentas
-                actualSpeed = value * 0.05; // 0.005 a 0.05
+            if (value <= 0.01) {
+                // Para valores de 0.0001 a 0.01, mapear a velocidades extremadamente lentas
+                actualSpeed = value * 0.01; // 0.000001 a 0.0001
+            } else if (value <= 0.1) {
+                // Para valores de 0.01 a 0.1, mapear a velocidades muy lentas
+                actualSpeed = 0.0001 + (value - 0.01) * 0.001; // 0.0001 a 0.00019
+            } else if (value <= 1.0) {
+                // Para valores de 0.1 a 1.0, mapear a velocidades lentas
+                actualSpeed = 0.00019 + (value - 0.1) * 0.005; // 0.00019 a 0.00064
             } else {
                 // Para valores de 1.0 a 5.0, incremento más rápido
-                actualSpeed = 0.05 + (value - 1.0) * 0.1; // 0.05 a 0.45
+                actualSpeed = 0.00064 + (value - 1.0) * 0.01; // 0.00064 a 0.04064
             }
             this.simulator.setTimeScale(actualSpeed);
-            this.elements.timeScaleValue.textContent = `${value.toFixed(1)}x`;
+            this.elements.timeScaleValue.textContent = `${value.toFixed(4)}x`;
         });
         
         // Opciones visuales

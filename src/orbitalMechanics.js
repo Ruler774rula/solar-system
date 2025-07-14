@@ -188,7 +188,7 @@ export class OrbitalMechanics {
      * @param {number} scale - Nueva escala de tiempo
      */
     setTimeScale(scale) {
-        this.timeScale = Math.max(0.001, Math.min(1.0, scale));
+        this.timeScale = Math.max(0.0001, Math.min(5.0, scale));
     }
 
     /**

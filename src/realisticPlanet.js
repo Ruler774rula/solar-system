@@ -173,8 +173,31 @@ export class RealisticPlanet {
     }
     
     createMoon(moonData, index) {
-        const moonSize = moonData.size * this.size * 0.5; // Escala relativa al planeta
-        const moonDistance = moonData.distance * 100; // Convertir AU a unidades de visualización
+        let moonSize = Math.max(0.005, moonData.size * this.size * 0.35); // Escala de la luna reducida
+
+        // Escala de distancia revisada para mayor realismo y visibilidad
+        const moonDistanceScale = 400;
+        let moonDistance = moonData.distance * moonDistanceScale;
+
+        // Para Júpiter y Saturno, aumentar el espaciado para evitar solapamientos
+        if (this.data.name === 'Júpiter' || this.data.name === 'Saturno') {
+            moonDistance *= 1.5;
+        }
+
+        // Caso específico para la Luna de la Tierra
+        if (this.data.name === 'Tierra') {
+            moonDistance *= 0.8; // Acercar un poco la Luna
+        }
+
+        // Caso específico para las lunas de Marte
+        if (this.data.name === 'Marte') {
+            moonSize *= 0.05; // Reducir drásticamente el tamaño
+            moonDistance *= (moonData.name === 'Deimos') ? 1.8 : 1.2; // Aumentar separación
+        }
+
+        // Asegurar una distancia mínima para que la luna no quede dentro del planeta
+        const minMoonDistance = this.size * 1.1 + moonSize;
+        moonDistance = Math.max(minMoonDistance, moonDistance);
         
         const moonGeometry = new THREE.SphereGeometry(moonSize, 16, 16);
         const moonMaterial = new THREE.MeshPhongMaterial({
@@ -207,7 +230,7 @@ export class RealisticPlanet {
             distance: moonDistance,
             orbitalPeriod: moonData.orbitalPeriod,
             angle: Math.random() * Math.PI * 2,
-            speed: (2 * Math.PI) / moonData.orbitalPeriod * 0.01
+            speed: (2 * Math.PI) / moonData.orbitalPeriod
         };
         
         return moon;
@@ -369,11 +392,14 @@ export class RealisticPlanet {
         
         // Actualizar lunas
         this.moons.forEach(moon => {
-            moon.angle += moon.speed * this.orbitalMechanics.timeScale;
+            moon.angle += moon.speed * this.orbitalMechanics.timeScale * 10; // Factor de visualización para lunas
             moon.mesh.position.x = Math.cos(moon.angle) * moon.distance;
             moon.mesh.position.z = Math.sin(moon.angle) * moon.distance;
-            moon.mesh.rotation.y += 0.01 * this.orbitalMechanics.timeScale;
+
+            // Rotación síncrona: la luna siempre muestra la misma cara al planeta.
+            moon.mesh.rotation.y = moon.angle;
         });
+
         
         // Actualizar label con escalado dinámico
         if (this.label && this.showLabel) {
