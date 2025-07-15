@@ -319,6 +319,12 @@ export class RealisticPlanet {
         const moonOrbit = this.createMoonOrbit(moonDistance);
         moonGroup.add(moonOrbit);
         
+        // Calcular velocidad orbital realista
+        // Convertir período orbital de días a unidades de simulación
+        // Factor de conversión: 1 día real = 0.001 unidades de tiempo de simulación
+        const timeConversionFactor = 0.001;
+        const orbitalSpeedInSimulation = (2 * Math.PI) / (moonData.orbitalPeriod * timeConversionFactor);
+        
         const moon = {
             name: moonData.name,
             mesh: moonMesh,
@@ -326,7 +332,7 @@ export class RealisticPlanet {
             distance: moonDistance,
             orbitalPeriod: moonData.orbitalPeriod,
             angle: Math.random() * Math.PI * 2,
-            speed: (2 * Math.PI) / moonData.orbitalPeriod
+            speed: orbitalSpeedInSimulation
         };
         
         // Ahora configurar el userData correctamente con el objeto moon completo
@@ -507,7 +513,8 @@ export class RealisticPlanet {
         
         // Actualizar lunas
         this.moons.forEach(moon => {
-            moon.angle += moon.speed * deltaTime * this.orbitalMechanics.timeScale * 20; // Reducido de 40 a 20 para nueva escala
+            // Aplicar velocidad orbital realista sin factor adicional
+            moon.angle += moon.speed * deltaTime * this.orbitalMechanics.timeScale;
             moon.mesh.position.x = Math.cos(moon.angle) * moon.distance;
             moon.mesh.position.z = Math.sin(moon.angle) * moon.distance;
 

@@ -40,6 +40,7 @@ class RealisticSolarSystem {
         this.showLabels = true;
         this.realisticScale = true;
         this.labelsHiddenForTransition = false;
+        this.showUI = true;
         
         // Raycaster para selección
         this.raycaster = new THREE.Raycaster();
@@ -273,11 +274,11 @@ class RealisticSolarSystem {
     
     setupLighting() {
         // Luz ambiental reducida para permitir sombras más visibles
-        this.ambientLight = new THREE.AmbientLight(0x404040, 0.4);
+        this.ambientLight = new THREE.AmbientLight(0x404040, 0.3);
         this.scene.add(this.ambientLight);
         
-        // Luz direccional del Sol con intensidad reducida
-        this.sunLight = new THREE.DirectionalLight(0xffffff, 4.0);
+        // Luz direccional del Sol con intensidad reducida y color blanco puro
+        this.sunLight = new THREE.DirectionalLight(0xffffff, 2.5);
         this.sunLight.position.set(0, 0, 0);
         this.sunLight.castShadow = true;
         this.sunLight.shadow.mapSize.width = 4096;
@@ -291,7 +292,7 @@ class RealisticSolarSystem {
         this.scene.add(this.sunLight);
         
         // Luz puntual en el Sol sin atenuación por distancia para iluminación uniforme
-        this.pointLight = new THREE.PointLight(0xffffff, 8.0, 0); // distance = 0 elimina atenuación
+        this.pointLight = new THREE.PointLight(0xffffff, 5.0, 0); // distance = 0 elimina atenuación
         this.pointLight.position.set(0, 0, 0);
         this.pointLight.castShadow = true;
         this.pointLight.shadow.mapSize.width = 4096;
@@ -300,7 +301,7 @@ class RealisticSolarSystem {
         this.scene.add(this.pointLight);
         
         // Luz adicional suave para iluminar las caras de los planetas sin lavar las sombras
-        this.hemisphereLight = new THREE.HemisphereLight(0xffffbb, 0x080820, 0.2);
+        this.hemisphereLight = new THREE.HemisphereLight(0xffffff, 0x080820, 0.15);
         this.scene.add(this.hemisphereLight);
     }
     
@@ -369,8 +370,8 @@ class RealisticSolarSystem {
             case 'KeyL':
                 this.toggleLabels();
                 break;
-            case 'KeyT':
-                this.toggleTrails();
+            case 'KeyH':
+                this.toggleUI();
                 break;
             case 'KeyF':
                 if (this.selectedPlanet) {
@@ -514,6 +515,13 @@ class RealisticSolarSystem {
         this.planets.forEach(planet => {
             planet.setShowLabel(this.showLabels);
         });
+    }
+    
+    toggleUI() {
+        this.showUI = !this.showUI;
+        if (this.ui) {
+            this.ui.toggle(this.showUI);
+        }
     }
     
     selectMoon(moon, parentPlanet) {

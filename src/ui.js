@@ -8,6 +8,7 @@ export class UI {
         this.simulator = simulator;
         this.elements = {};
         this.isInitialized = false;
+        this.isVisible = true;
         
         // Esperar a que el DOM esté listo
         if (document.readyState === 'loading') {
@@ -48,7 +49,7 @@ export class UI {
             showOrbits: document.getElementById('show-orbits'),
             showLabels: document.getElementById('show-labels'),
             exportDataBtn: document.getElementById('export-data-btn'),
-            screenshotBtn: document.getElementById('screenshot-btn'),
+            hideUIBtn: document.getElementById('hide-ui-btn'),
             planetInfo: document.getElementById('planet-info'),
             planetItems: document.getElementById('planet-items'),
             followingStatus: document.getElementById('following-status'),
@@ -107,8 +108,8 @@ export class UI {
             this.exportData();
         });
         
-        this.elements.screenshotBtn.addEventListener('click', () => {
-            this.simulator.captureScreenshot();
+        this.elements.hideUIBtn.addEventListener('click', () => {
+            this.simulator.toggleUI();
         });
 
         this.elements.closeInfoPanelBtn.addEventListener('click', () => {
@@ -380,7 +381,9 @@ export class UI {
                 this.elements.showLabels.checked = !this.elements.showLabels.checked;
                 this.simulator.toggleLabels();
                 break;
-
+            case 'KeyH':
+                this.simulator.toggleUI();
+                break;
             case 'KeyF':
                 if (this.simulator.selectedPlanet) {
                     this.simulator.followPlanet(this.simulator.selectedPlanet);
@@ -415,5 +418,73 @@ export class UI {
         setTimeout(() => {
             notification.remove();
         }, 3000);
+    }
+    
+    // Método para ocultar/mostrar UI
+    toggle(show) {
+        this.isVisible = show;
+        
+        if (show) {
+            // Mostrar UI
+            if (this.elements.uiContainer) {
+                this.elements.uiContainer.style.display = 'block';
+            }
+            // Ocultar botón de mostrar UI
+            this.hideShowUIButton();
+        } else {
+            // Ocultar UI
+            if (this.elements.uiContainer) {
+                this.elements.uiContainer.style.display = 'none';
+            }
+            // Mostrar botón de mostrar UI
+            this.createShowUIButton();
+        }
+    }
+    
+    createShowUIButton() {
+        // Eliminar botón existente si existe
+        this.hideShowUIButton();
+        
+        const button = document.createElement('button');
+        button.id = 'show-ui-btn';
+        button.innerHTML = '☰';
+        button.style.cssText = `
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            width: 40px;
+            height: 40px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 5px;
+            font-size: 18px;
+            cursor: pointer;
+            z-index: 10000;
+            transition: all 0.3s ease;
+        `;
+        
+        button.addEventListener('mouseenter', () => {
+            button.style.background = 'rgba(76, 175, 80, 0.8)';
+            button.style.transform = 'scale(1.1)';
+        });
+        
+        button.addEventListener('mouseleave', () => {
+            button.style.background = 'rgba(0, 0, 0, 0.8)';
+            button.style.transform = 'scale(1)';
+        });
+        
+        button.addEventListener('click', () => {
+            this.simulator.toggleUI();
+        });
+        
+        document.body.appendChild(button);
+    }
+    
+    hideShowUIButton() {
+        const existingButton = document.getElementById('show-ui-btn');
+        if (existingButton) {
+            existingButton.remove();
+        }
     }
 }

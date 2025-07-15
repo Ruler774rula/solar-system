@@ -22,7 +22,7 @@ export const PLANET_DATA = {
             average: 440 // Kelvin (167°C)
         },
         texture: 'mercury.png',
-        color: 0x8C7853,
+        color: 0x999999, // Color grisáceo más realista
         hasAtmosphere: false,
         hasRings: false,
         moons: []
@@ -103,7 +103,7 @@ export const PLANET_DATA = {
             average: 210 // Kelvin (-63°C)
         },
         texture: 'mars.png',
-        color: 0xCD5C5C,
+        color: 0xFF6B35, // Color más naranja
         hasAtmosphere: true,
         atmosphereColor: 0xFFB6C1,
         hasRings: false,
@@ -326,7 +326,7 @@ export const PLANET_DATA = {
             average: 72 // Kelvin (-201°C) en la tropopausa
         },
         texture: 'neptune.png',
-        color: 0x4B70DD,
+        color: 0x6BB6FF, // Azul más claro
         hasAtmosphere: true,
         atmosphereColor: 0x87CEEB,
         hasRings: true,
