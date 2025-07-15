@@ -53,7 +53,8 @@ export class UI {
             planetInfo: document.getElementById('planet-info'),
             planetItems: document.getElementById('planet-items'),
             followingStatus: document.getElementById('following-status'),
-            simulationStatus: document.getElementById('simulation-status')
+            simulationStatus: document.getElementById('simulation-status'),
+            closeInfoPanelBtn: document.getElementById('close-info-panel-btn')
         };
     }
     
@@ -114,6 +115,12 @@ export class UI {
         this.elements.screenshotBtn.addEventListener('click', () => {
             this.simulator.captureScreenshot();
         });
+
+        this.elements.closeInfoPanelBtn.addEventListener('click', () => {
+            if (this.simulator.selectedPlanet) {
+                this.selectPlanet(this.simulator.selectedPlanet);
+            }
+        });
     }
     
     updatePlanetList() {
@@ -163,89 +170,104 @@ export class UI {
         if (!this.elements.planetInfo || !planetInfo) return;
         
         const html = `
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <h4>${planetInfo.name}</h4>
-                <button class="ui-button" style="padding: 5px 10px; font-size: 12px;" onclick="window.solarSystem.ui.selectPlanet(window.solarSystem.selectedPlanet)">✕</button>
-            </div>
-            <div class="info-grid">
-                <div class="info-item">
-                    <div class="info-label">Tamaño</div>
-                    <div class="info-value">${planetInfo.size.toFixed(3)} R⊕</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">Masa</div>
-                    <div class="info-value">${planetInfo.mass.toFixed(3)} M⊕</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">Distancia</div>
-                    <div class="info-value">${planetInfo.distance.toFixed(3)} AU</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">Dist. Actual</div>
-                    <div class="info-value">${planetInfo.currentDistance.toFixed(3)} AU</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">Periapsis</div>
-                    <div class="info-value">${planetInfo.periapsis.toFixed(3)} AU</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">Apoapsis</div>
-                    <div class="info-value">${planetInfo.apoapsis.toFixed(3)} AU</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">Excentricidad</div>
-                    <div class="info-value">${planetInfo.eccentricity.toFixed(4)}</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">Inclinación</div>
-                    <div class="info-value">${planetInfo.inclination.toFixed(2)}°</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">Período Orbital</div>
-                    <div class="info-value">${planetInfo.orbitalPeriod.toFixed(1)} días</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">Período Rotación</div>
-                    <div class="info-value">${planetInfo.rotationPeriod.toFixed(1)} h</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">Temperatura</div>
-                    <div class="info-value">${planetInfo.temperature.toFixed(0)} K</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">Atmósfera</div>
-                    <div class="info-value">${planetInfo.hasAtmosphere ? 'Sí' : 'No'}</div>
-                </div>
-                ${planetInfo.cameraDistance !== undefined ? `
-                <div class="info-item" style="background: rgba(255, 255, 0, 0.1); border: 1px solid #ffeb3b;">
-                    <div class="info-label">🔍 Dist. Cámara</div>
-                    <div class="info-value">${planetInfo.cameraDistance.toFixed(3)} unidades</div>
-                </div>
-                <div class="info-item" style="background: rgba(255, 255, 0, 0.1); border: 1px solid #ffeb3b;">
-                    <div class="info-label">🔍 Min Distance</div>
-                    <div class="info-value">${planetInfo.minDistance.toFixed(3)} unidades</div>
-                </div>` : ''}
+            <div style="position: relative; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.2); margin-bottom: 15px;">
+                <h4 style="margin: 0; padding-right: 30px;">${planetInfo.name}</h4>
             </div>
             
-            ${planetInfo.hasRings ? '<div class="info-item"><strong>Tiene anillos</strong></div>' : ''}
+            <div class="ui-section" style="margin-bottom: 20px;">
+                <h5 style="margin: 0 0 10px 0; color: #4CAF50; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Características Físicas</h5>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-label">Tamaño</div>
+                        <div class="info-value">${planetInfo.size.toFixed(3)} R⊕</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Masa</div>
+                        <div class="info-value">${planetInfo.mass.toFixed(3)} M⊕</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Temperatura</div>
+                        <div class="info-value">${planetInfo.temperature.toFixed(0)} K (${(planetInfo.temperature - 273.15).toFixed(0)}°C)</div>
+                    </div>
+                    ${planetInfo.temperatureRange ? `
+                    <div class="info-item">
+                        <div class="info-label">Rango Temp.</div>
+                        <div class="info-value">${planetInfo.temperatureRange}</div>
+                    </div>` : ''}
+                    <div class="info-item">
+                        <div class="info-label">Atmósfera</div>
+                        <div class="info-value">${planetInfo.hasAtmosphere ? 'Sí' : 'No'}</div>
+                    </div>
+                </div>
+            </div>
             
-            ${planetInfo.moons.length > 0 ? `
-                <div class="ui-section">
-                    <h4>Lunas (${planetInfo.moons.length})</h4>
-                    ${planetInfo.moons.map(moon => `
-                        <div class="info-item">
-                            <div class="info-label">${moon.name}</div>
-                            <div class="info-value">${moon.distance.toFixed(3)} AU</div>
-                        </div>
-                    `).join('')}
+            <div class="ui-section" style="margin-bottom: 20px;">
+                <h5 style="margin: 0 0 10px 0; color: #2196F3; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Órbita y Rotación</h5>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-label">Distancia</div>
+                        <div class="info-value">${planetInfo.distance.toFixed(3)} AU</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Dist. Actual</div>
+                        <div class="info-value">${planetInfo.currentDistance.toFixed(3)} AU</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Periapsis</div>
+                        <div class="info-value">${planetInfo.periapsis.toFixed(3)} AU</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Apoapsis</div>
+                        <div class="info-value">${planetInfo.apoapsis.toFixed(3)} AU</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Excentricidad</div>
+                        <div class="info-value">${planetInfo.eccentricity.toFixed(4)}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Inclinación Orbital</div>
+                        <div class="info-value">${planetInfo.inclination.toFixed(2)}°</div>
+                    </div>
+                    ${planetInfo.axialTilt !== undefined ? `
+                    <div class="info-item">
+                        <div class="info-label">Inclinación Axial</div>
+                        <div class="info-value">${planetInfo.axialTilt.toFixed(1)}°</div>
+                    </div>` : ''}
+                    <div class="info-item">
+                        <div class="info-label">Período Orbital</div>
+                        <div class="info-value">${planetInfo.orbitalPeriod.toFixed(1)} días</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Período Rotación</div>
+                        <div class="info-value">${planetInfo.rotationPeriod.toFixed(1)} h</div>
+                    </div>
+                </div>
+            </div>
+            
+            ${planetInfo.hasRings ? `
+                <div class="ui-section" style="margin-bottom: 20px;">
+                    <h5 style="margin: 0 0 10px 0; color: #FF9800; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Anillos</h5>
+                    <div class="info-item">
+                        <div class="info-label">Sistema de anillos</div>
+                        <div class="info-value">Presente</div>
+                    </div>
                 </div>
             ` : ''}
             
-            <div class="ui-section">
-                <button class="ui-button" onclick="window.solarSystem.followPlanet(window.solarSystem.getPlanetByName('${planetInfo.name}'))">
-                    Seguir Planeta
-                </button>
-            </div>
+            ${planetInfo.moons.length > 0 ? `
+                <div class="ui-section" style="margin-bottom: 20px;">
+                    <h5 style="margin: 0 0 10px 0; color: #9C27B0; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Lunas (${planetInfo.moons.length})</h5>
+                    <div class="info-grid">
+                        ${planetInfo.moons.map(moon => `
+                            <div class="info-item">
+                                <div class="info-label">${moon.name}</div>
+                                <div class="info-value">${moon.distance.toFixed(3)} AU${moon.eclipticInclination !== undefined ? ` (Incl. Eclíptica: ${moon.eclipticInclination.toFixed(1)}°)` : ''}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            ` : ''}
+            
         `;
         
         this.elements.planetInfo.innerHTML = html;

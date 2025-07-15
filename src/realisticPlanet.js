@@ -179,6 +179,16 @@ export class RealisticPlanet {
             ringMaterial.map = ringTexture;
         }
         
+        // Aplicar inclinación axial a los anillos
+        if (this.rings && this.data.axialTilt !== undefined) {
+            // Convertir grados a radianes
+            const axialTiltRad = (this.data.axialTilt * Math.PI) / 180;
+            
+            // Aplicar la inclinación del eje del planeta a los anillos
+            // Los anillos están en el plano ecuatorial del planeta
+            this.rings.rotation.z = axialTiltRad;
+        }
+        
         this.group.add(this.rings);
     }
     
@@ -229,6 +239,18 @@ export class RealisticPlanet {
         this.data.moons.forEach((moonData, index) => {
             const moon = this.createMoon(moonData, index);
             this.moons.push(moon);
+            
+            // Aplicar inclinación a las órbitas de las lunas
+            if (moonData.eclipticInclination !== undefined) {
+                // Caso especial: Luna orbita en el plano de la eclíptica
+                const eclipticInclinationRad = (moonData.eclipticInclination * Math.PI) / 180;
+                moon.group.rotation.z = eclipticInclinationRad;
+            } else if (this.data.axialTilt !== undefined) {
+                // Caso general: lunas regulares siguen la inclinación axial del planeta
+                const axialTiltRad = (this.data.axialTilt * Math.PI) / 180;
+                moon.group.rotation.z = axialTiltRad;
+            }
+            
             this.group.add(moon.group);
         });
     }
@@ -363,8 +385,8 @@ export class RealisticPlanet {
     createLabel() {
         const canvas = document.createElement('canvas');
         const context = canvas.getContext('2d');
-        canvas.width = 256;
-        canvas.height = 64;
+        canvas.width = 512; // Mayor resolución para texto más nítido
+        canvas.height = 128;
         
         // Sin fondo - transparente
         context.clearRect(0, 0, canvas.width, canvas.height);
@@ -373,22 +395,26 @@ export class RealisticPlanet {
         context.fillStyle = 'white';
         context.strokeStyle = 'black';
         context.lineWidth = 3;
-        context.font = 'bold 24px Arial';
+        context.font = 'bold 32px Arial'; // Fuente más grande para mejor calidad
         context.textAlign = 'center';
         
         // Dibujar contorno
-        context.strokeText(this.data.name, canvas.width / 2, canvas.height / 2 + 8);
+        context.strokeText(this.data.name, canvas.width / 2, canvas.height / 2 + 12);
         // Dibujar texto
-        context.fillText(this.data.name, canvas.width / 2, canvas.height / 2 + 8);
+        context.fillText(this.data.name, canvas.width / 2, canvas.height / 2 + 12);
         
         const texture = new THREE.CanvasTexture(canvas);
+        texture.generateMipmaps = false;
+        texture.minFilter = THREE.LinearFilter;
+        texture.magFilter = THREE.LinearFilter;
+        
         const material = new THREE.SpriteMaterial({ 
             map: texture,
             transparent: true,
             alphaTest: 0.1
         });
         this.label = new THREE.Sprite(material);
-        this.label.scale.set(6, 1.5, 1); // Escala inicial más grande
+        this.label.scale.set(0.1, 0.025, 1); // Escala inicial muy pequeña para evitar el flash grande
         this.label.userData = { planet: this, type: 'label' };
     }
     
@@ -434,7 +460,7 @@ export class RealisticPlanet {
         this.trail.geometry.attributes.position.needsUpdate = true;
     }
     
-    update(time, camera = null) {
+    update(time, camera = null, system = null) {
         // Calcular nueva posición orbital
         const position = this.orbitalMechanics.calculateOrbitalPosition({
             semiMajorAxis: this.semiMajorAxis * 10, // Escalar para visualización
@@ -472,16 +498,47 @@ export class RealisticPlanet {
         });
 
         
-        // Actualizar label con escalado dinámico
+        // Actualizar label con escalado constante
         if (this.label && this.showLabel) {
-            this.label.position.copy(this.group.position);
-            this.label.position.y += this.size + 1.0;
-            
-            // Escalado dinámico basado en la distancia de la cámara
-            if (camera) {
-                const distance = camera.position.distanceTo(this.group.position);
-                const scale = Math.max(0.5, Math.min(3.0, distance * 0.1)); // Escala entre 0.5 y 3.0
-                this.label.scale.set(6 * scale, 1.5 * scale, 1);
+            // Verificar si las etiquetas están ocultas por transición
+            if (system && system.labelsHiddenForTransition) {
+                this.label.visible = false;
+            } else {
+                this.label.position.copy(this.group.position);
+                // Ajuste de posición para acercar más a planetas pequeños
+                 if (this.size < 0.5) { // Umbral para considerar un planeta pequeño (ej: Mercurio, Marte)
+                     this.label.position.y += this.size * 1.0 + 0.05; // Más cerca para planetas pequeños
+                 } else {
+                     this.label.position.y += this.size * 1.2 + 0.2; // Mantener la posición anterior para planetas grandes
+                 }
+                
+                // Escalado para mantener un tamaño visual más constante en pantalla
+                if (camera) {
+                    const distance = camera.position.distanceTo(this.group.position);
+                    // Control de opacidad y escalado basado en la distancia para un efecto de desvanecimiento
+                    const maxDistance = 150; // Distancia a la que la etiqueta desaparece por completo
+                    const fadeStartDistance = 100; // Distancia a la que comienza el desvanecimiento
+
+                    if (distance > maxDistance) {
+                        this.label.visible = false;
+                    } else {
+                        this.label.visible = true;
+                        let opacity = 1;
+                        if (distance > fadeStartDistance) {
+                            opacity = 1 - (distance - fadeStartDistance) / (maxDistance - fadeStartDistance);
+                        }
+                        // Solo actualizar opacidad si no se está haciendo fade in
+                        if (this.label.material.opacity >= 1 || !this.label.visible) {
+                            this.label.material.opacity = Math.max(0, opacity); // Asegura que la opacidad no sea negativa
+                        }
+                        this.label.material.transparent = true; // Habilita la transparencia
+
+                        // Escala inversamente proporcional a la distancia, con un límite mínimo para que no desaparezca
+                        const minScaleFactor = 0.05; // Escala mínima para la letra cuando está muy lejos
+                        const scale = Math.max(minScaleFactor, distance * 0.12); // Factor ajustado para etiquetas más grandes y reducción gradual
+                        this.label.scale.set(3.0 * scale, 0.75 * scale, 1);
+                    }
+                }
             }
         }
         
@@ -539,22 +596,18 @@ export class RealisticPlanet {
             apoapsis: this.data.apoapsis,
             eccentricity: this.data.eccentricity,
             inclination: this.data.inclination,
+            axialTilt: this.data.axialTilt,
             orbitalPeriod: this.data.orbitalPeriod,
             rotationPeriod: this.data.rotationPeriod,
-            temperature: this.temperature,
+            temperature: this.data.temperature ? this.data.temperature.average : this.temperature,
+            temperatureRange: this.data.temperature ? `${this.data.temperature.min}-${this.data.temperature.max} K` : null,
             hasAtmosphere: this.data.hasAtmosphere,
             hasRings: this.data.hasRings,
-            moons: this.data.moons || []
+            moons: (this.data.moons || []).map(moon => ({
+                ...moon,
+                eclipticInclination: moon.eclipticInclination
+            }))
         };
-        
-        // Agregar información de debug de la cámara
-        if (camera && this.group) {
-            info.cameraDistance = camera.position.distanceTo(this.group.position);
-        }
-        
-        if (controls) {
-            info.minDistance = controls.minDistance;
-        }
         
         return info;
     }

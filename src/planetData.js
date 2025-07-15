@@ -13,8 +13,14 @@ export const PLANET_DATA = {
         apoapsis: 0.467, // Afelio en AU
         eccentricity: 0.206,
         inclination: 7.0, // Inclinación orbital en grados
+        axialTilt: 0.034, // Inclinación del eje en grados
         orbitalPeriod: 87.97, // Días terrestres
-        rotationPeriod: 58.65, // Días terrestres
+        rotationPeriod: 1407.6, // Horas (58.65 días)
+        temperature: {
+            min: 100, // Kelvin (-173°C) lado nocturno
+            max: 700, // Kelvin (427°C) lado diurno
+            average: 440 // Kelvin (167°C)
+        },
         texture: 'mercury.png',
         color: 0x8C7853,
         hasAtmosphere: false,
@@ -30,8 +36,14 @@ export const PLANET_DATA = {
         apoapsis: 0.728,
         eccentricity: 0.007,
         inclination: 3.4,
+        axialTilt: 177.4, // Inclinación del eje en grados (casi invertido)
         orbitalPeriod: 224.7,
-        rotationPeriod: -243.02, // Rotación retrógrada
+        rotationPeriod: -5832.5, // Horas (243.02 días, rotación retrógrada)
+        temperature: {
+            min: 735, // Kelvin (462°C)
+            max: 737, // Kelvin (464°C)
+            average: 736 // Kelvin (463°C) - efecto invernadero extremo
+        },
         texture: 'venus.png',
         color: 0xFFC649,
         hasAtmosphere: true,
@@ -48,8 +60,14 @@ export const PLANET_DATA = {
         apoapsis: 1.017,
         eccentricity: 0.017,
         inclination: 0.0,
+        axialTilt: 23.4, // Inclinación del eje en grados (causa las estaciones)
         orbitalPeriod: 365.25,
-        rotationPeriod: 1.0,
+        rotationPeriod: 24.0, // Horas
+        temperature: {
+            min: 184, // Kelvin (-89°C) Antártida
+            max: 331, // Kelvin (58°C) desiertos
+            average: 288 // Kelvin (15°C)
+        },
         texture: 'earth.png',
         color: 0x6B93D6,
         hasAtmosphere: true,
@@ -62,7 +80,8 @@ export const PLANET_DATA = {
                 distance: 0.00257, // En AU
                 orbitalPeriod: 27.32,
                 texture: 'moon.png',
-                color: 0xC0C0C0
+                color: 0xC0C0C0,
+                eclipticInclination: 5.1 // La Luna orbita en el plano de la eclíptica con 5.1° de inclinación
             }
         ]
     },
@@ -75,8 +94,14 @@ export const PLANET_DATA = {
         apoapsis: 1.666,
         eccentricity: 0.094,
         inclination: 1.9,
+        axialTilt: 25.2, // Inclinación del eje en grados (similar a la Tierra)
         orbitalPeriod: 686.98,
-        rotationPeriod: 1.03,
+        rotationPeriod: 24.6, // Horas (24h 37min)
+        temperature: {
+            min: 130, // Kelvin (-143°C) polos en invierno
+            max: 308, // Kelvin (35°C) ecuador en verano
+            average: 210 // Kelvin (-63°C)
+        },
         texture: 'mars.png',
         color: 0xCD5C5C,
         hasAtmosphere: true,
@@ -108,8 +133,14 @@ export const PLANET_DATA = {
         apoapsis: 5.458,
         eccentricity: 0.049,
         inclination: 1.3,
+        axialTilt: 3.1, // Inclinación del eje en grados (muy pequeña)
         orbitalPeriod: 4332.59,
-        rotationPeriod: 0.41,
+        rotationPeriod: 9.9, // Horas
+        temperature: {
+            min: 110, // Kelvin (-163°C) en las nubes superiores
+            max: 20000, // Kelvin en el núcleo
+            average: 165 // Kelvin (-108°C) en la tropopausa
+        },
         texture: 'jupiter.png',
         color: 0xD8CA9D,
         hasAtmosphere: true,
@@ -155,8 +186,14 @@ export const PLANET_DATA = {
         apoapsis: 10.124,
         eccentricity: 0.057,
         inclination: 2.5,
+        axialTilt: 26.7, // Inclinación del eje en grados (similar a la Tierra)
         orbitalPeriod: 10759.22,
-        rotationPeriod: 0.45,
+        rotationPeriod: 10.7, // Horas
+        temperature: {
+            min: 82, // Kelvin (-191°C) en las nubes superiores
+            max: 11700, // Kelvin en el núcleo
+            average: 134 // Kelvin (-139°C) en la tropopausa
+        },
         texture: 'saturn.png',
         color: 0xFAD5A5,
         hasAtmosphere: true,
@@ -234,8 +271,14 @@ export const PLANET_DATA = {
         apoapsis: 20.006,
         eccentricity: 0.046,
         inclination: 0.8,
+        axialTilt: 97.8, // Inclinación del eje en grados (rota de lado)
         orbitalPeriod: 30688.5,
-        rotationPeriod: -0.72, // Rotación retrógrada
+        rotationPeriod: -17.2, // Horas (rotación retrógrada)
+        temperature: {
+            min: 49, // Kelvin (-224°C) temperatura mínima registrada
+            max: 5000, // Kelvin en el núcleo rocoso
+            average: 59 // Kelvin (-214°C) en la tropopausa
+        },
         texture: 'uranus.png',
         color: 0x4FD0E7,
         hasAtmosphere: true,
@@ -274,8 +317,14 @@ export const PLANET_DATA = {
         apoapsis: 30.546,
         eccentricity: 0.009,
         inclination: 1.8,
+        axialTilt: 28.3, // Inclinación del eje en grados
         orbitalPeriod: 60182,
-        rotationPeriod: 0.67,
+        rotationPeriod: 16.1, // Horas
+        temperature: {
+            min: 55, // Kelvin (-218°C) en las nubes superiores
+            max: 5400, // Kelvin en el núcleo
+            average: 72 // Kelvin (-201°C) en la tropopausa
+        },
         texture: 'neptune.png',
         color: 0x4B70DD,
         hasAtmosphere: true,

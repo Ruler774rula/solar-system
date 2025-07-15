@@ -38,6 +38,7 @@ class RealisticSolarSystem {
         this.showLabels = true;
         this.showTrails = false;
         this.realisticScale = true;
+        this.labelsHiddenForTransition = false;
         
         // Raycaster para selección
         this.raycaster = new THREE.Raycaster();
@@ -324,6 +325,9 @@ class RealisticSolarSystem {
         
         // Reiniciar datos de seguimiento para el nuevo planeta
         if (planet) {
+            // Ocultar todas las etiquetas antes del zoom
+            this.hideLabelsForTransition();
+            
             // Ajustar distancia mínima de la cámara basada en el planeta específico
             const planetDistances = {
                 'Mercurio': 0.139,
@@ -439,6 +443,11 @@ class RealisticSolarSystem {
                 const direction = new THREE.Vector3(1, 0.5, 1).normalize();
                 this.camera.position.copy(currentPlanetPosition).add(direction.multiplyScalar(distance));
                 this.controls.target.copy(currentPlanetPosition);
+                
+                // Mostrar las etiquetas después del zoom con un pequeño delay
+                setTimeout(() => {
+                    this.showLabelsAfterTransition();
+                }, 100);
             } else {
                 // Seguir el movimiento del planeta suavemente
                 const delta = new THREE.Vector3().subVectors(currentPlanetPosition, this.lastPlanetPosition);
@@ -460,9 +469,9 @@ class RealisticSolarSystem {
         requestAnimationFrame((t) => this.animate(t));
         
         if (!this.isPaused) {
-            // Actualizar planetas con referencia a la cámara
+            // Actualizar planetas con referencia a la cámara y al sistema
             this.planets.forEach(planet => {
-                planet.update(time * 0.001, this.camera);
+                planet.update(time * 0.001, this.camera, this);
             });
             
             // Actualizar seguimiento de cámara
@@ -479,6 +488,46 @@ class RealisticSolarSystem {
         
         // Renderizar escena
         this.renderer.render(this.scene, this.camera);
+    }
+    
+    hideLabelsForTransition() {
+        this.labelsHiddenForTransition = true;
+        this.planets.forEach(planet => {
+            if (planet.label) {
+                planet.label.visible = false;
+            }
+        });
+    }
+    
+    showLabelsAfterTransition() {
+        this.labelsHiddenForTransition = false;
+        if (this.showLabels) {
+            this.planets.forEach(planet => {
+                if (planet.label && planet.showLabel) {
+                    planet.label.visible = true;
+                    planet.label.material.opacity = 0; // Empezar invisible
+                    
+                    // Animar el fade in
+                    const fadeInDuration = 500; // 500ms
+                    const startTime = Date.now();
+                    
+                    const fadeIn = () => {
+                        const elapsed = Date.now() - startTime;
+                        const progress = Math.min(elapsed / fadeInDuration, 1);
+                        
+                        // Función de easing suave (ease-out)
+                        const easedProgress = 1 - Math.pow(1 - progress, 3);
+                        planet.label.material.opacity = easedProgress;
+                        
+                        if (progress < 1) {
+                            requestAnimationFrame(fadeIn);
+                        }
+                    };
+                    
+                    requestAnimationFrame(fadeIn);
+                }
+            });
+        }
     }
     
     handleWindowResize() {
