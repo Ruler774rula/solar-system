@@ -6,7 +6,7 @@
 export const PLANET_DATA = {
     mercury: {
         name: 'Mercurio',
-        size: 0.383, // Radio relativo a la Tierra
+        size: 0.353, // Radio relativo a la Tierra
         mass: 0.055, // Masa relativa a la Tierra
         distance: 0.387, // Distancia media en AU
         periapsis: 0.307, // Perihelio en AU
@@ -58,7 +58,7 @@ export const PLANET_DATA = {
         moons: [
             {
                 name: 'Luna',
-                size: 0.273,
+                size: 0.15, // Escala aumentada pero proporcionalmente correcta
                 distance: 0.00257, // En AU
                 orbitalPeriod: 27.32,
                 texture: 'moon.png',
@@ -85,14 +85,14 @@ export const PLANET_DATA = {
         moons: [
             {
                 name: 'Fobos',
-                size: 0.0001,
+                size: 0.008, // Escala aumentada (22 km vs 12 km Deimos)
                 distance: 0.000063,
                 orbitalPeriod: 0.32,
                 color: 0x8B7355
             },
             {
                 name: 'Deimos',
-                size: 0.00006,
+                size: 0.005, // Escala aumentada pero menor que Fobos
                 distance: 0.000157,
                 orbitalPeriod: 1.26,
                 color: 0x8B7355
@@ -114,33 +114,32 @@ export const PLANET_DATA = {
         color: 0xD8CA9D,
         hasAtmosphere: true,
         atmosphereColor: 0xFFE4B5,
-        hasRings: true,
-        ringColor: 0x8B7355,
+        hasRings: false, // Anillos eliminados para mayor realismo
         moons: [
             {
                 name: 'Ío',
-                size: 0.286,
+                size: 0.13, // Escala aumentada (3643 km diámetro)
                 distance: 0.00282,
                 orbitalPeriod: 1.77,
                 color: 0xFFFF99
             },
             {
                 name: 'Europa',
-                size: 0.245,
+                size: 0.11, // Escala aumentada (3122 km diámetro)
                 distance: 0.00449,
                 orbitalPeriod: 3.55,
                 color: 0xB0E0E6
             },
             {
                 name: 'Ganimedes',
-                size: 0.413,
+                size: 0.19, // La más grande (5268 km diámetro)
                 distance: 0.00716,
                 orbitalPeriod: 7.15,
                 color: 0x8B7D6B
             },
             {
                 name: 'Calisto',
-                size: 0.378,
+                size: 0.16, // Segunda más grande (4821 km diámetro)
                 distance: 0.01259,
                 orbitalPeriod: 16.69,
                 color: 0x696969
@@ -163,23 +162,66 @@ export const PLANET_DATA = {
         hasAtmosphere: true,
         atmosphereColor: 0xFFE4B5,
         hasRings: true,
-        ringColor: 0xC0C0C0,
-        ringInnerRadius: 1.2,
-        ringOuterRadius: 2.3,
+        ringColor: 0xE6D7C3, // Color más realista de los anillos
+        ringInnerRadius: 1.15, // Anillo D interno
+        ringOuterRadius: 2.8, // Hasta el anillo F
+        ringSegments: [
+            { innerRadius: 1.235, outerRadius: 1.525, opacity: 0.4, color: 0x96846F }, // Anillo C
+            { innerRadius: 1.525, outerRadius: 1.949, opacity: 0.9, color: 0xB5A690 }, // Anillo B
+            // División de Cassini
+            { innerRadius: 1.949, outerRadius: 2.024, opacity: 0.05, color: 0x3A3A3A }, 
+            { innerRadius: 2.024, outerRadius: 2.267, opacity: 0.7, color: 0xC2B39A }, // Anillo A
+            // División de Encke
+            { innerRadius: 2.214, outerRadius: 2.217, opacity: 0.02, color: 0x282828 }
+        ],
         moons: [
             {
-                name: 'Titán',
-                size: 0.404,
-                distance: 0.00817,
-                orbitalPeriod: 15.95,
-                color: 0xDEB887
+                name: 'Encélado',
+                size: 0.05, // Escala aumentada (498 km de diámetro)
+                distance: 2.8, // cerca del anillo más exterior
+                orbitalPeriod: 1.37,
+                color: 0xF0F8FF,
+                texture: null
             },
             {
-                name: 'Encélado',
-                size: 0.0396,
-                distance: 0.00159,
-                orbitalPeriod: 1.37,
-                color: 0xF0F8FF
+                name: 'Tetis',
+                size: 0.08, // Escala aumentada (1060 km de diámetro)
+                distance: 3.2, // in planetary radii
+                orbitalPeriod: 1.89,
+                color: 0xE6E6FA,
+                texture: null
+            },
+            {
+                name: 'Dione',
+                size: 0.08, // Escala aumentada (1120 km de diámetro)
+                distance: 3.8, // in planetary radii
+                orbitalPeriod: 2.74,
+                color: 0xDCDCDC,
+                texture: null
+            },
+            {
+                name: 'Rea',
+                size: 0.11, // Escala aumentada (1530 km de diámetro)
+                distance: 4.5, // in planetary radii
+                orbitalPeriod: 4.52,
+                color: 0xC0C0C0,
+                texture: null
+            },
+            {
+                name: 'Titán',
+                size: 0.18, // Menor que Ganimedes pero segunda más grande (5150 km)
+                distance: 8.5, // in planetary radii
+                orbitalPeriod: 15.95,
+                color: 0xDEB887,
+                texture: null
+            },
+            {
+                name: 'Jápeto',
+                size: 0.10, // Menor que Titán (1460 km de diámetro)
+                distance: 15.0, // in planetary radii
+                orbitalPeriod: 79.33,
+                color: 0x8B7355, // Color más oscuro por su característica dicotomía
+                texture: null
             }
         ]
     },
@@ -200,19 +242,23 @@ export const PLANET_DATA = {
         atmosphereColor: 0x87CEEB,
         hasRings: true,
         ringColor: 0x696969,
-        ringInnerRadius: 1.5,
+        ringInnerRadius: 1.6,
         ringOuterRadius: 2.0,
+        ringSegments: [
+            { innerRadius: 1.6, outerRadius: 1.65, opacity: 0.6, color: 0x555555 }, // Anillo Epsilon (más opaco)
+            { innerRadius: 1.75, outerRadius: 1.8, opacity: 0.4, color: 0x666666 } // Anillo Delta
+        ],
         moons: [
             {
                 name: 'Miranda',
-                size: 0.0372,
+                size: 0.03, // Más pequeña (472 km diámetro)
                 distance: 0.000866,
                 orbitalPeriod: 1.41,
                 color: 0x8B7D6B
             },
             {
                 name: 'Ariel',
-                size: 0.0911,
+                size: 0.07, // Más pequeña (1158 km diámetro)
                 distance: 0.001278,
                 orbitalPeriod: 2.52,
                 color: 0xC0C0C0
@@ -236,10 +282,16 @@ export const PLANET_DATA = {
         atmosphereColor: 0x87CEEB,
         hasRings: true,
         ringColor: 0x696969,
+        ringInnerRadius: 1.4,
+        ringOuterRadius: 1.6,
+        ringSegments: [
+            { innerRadius: 1.4, outerRadius: 1.45, opacity: 0.5, color: 0x444444 }, // Anillo Adams (más opaco)
+            { innerRadius: 1.53, outerRadius: 1.55, opacity: 0.3, color: 0x555555 } // Anillo Le Verrier
+        ],
         moons: [
             {
                 name: 'Tritón',
-                size: 0.212,
+                size: 0.12, // Escala aumentada pero menor que Titán (2707 km diámetro)
                 distance: 0.00237,
                 orbitalPeriod: -5.88, // Órbita retrógrada
                 color: 0xF0F8FF

@@ -127,46 +127,98 @@ export class RealisticPlanet {
     }
     
     createRings() {
-        const innerRadius = this.size * (this.data.ringInnerRadius || 1.5);
-        const outerRadius = this.size * (this.data.ringOuterRadius || 2.5);
-        
-        const ringGeometry = new THREE.RingGeometry(innerRadius, outerRadius, 64);
-        const ringMaterial = new THREE.MeshBasicMaterial({
-            color: this.data.ringColor || 0xC0C0C0,
-            side: THREE.DoubleSide,
-            transparent: true,
-            opacity: 0.7,
-            depthWrite: false,
-            depthTest: true,
-            blending: THREE.NormalBlending
-        });
-        
-        this.rings = new THREE.Mesh(ringGeometry, ringMaterial);
-        this.rings.rotation.x = Math.PI / 2;
-        
-        // Añadir variación en los anillos
-        const ringTexture = this.createRingTexture();
-        ringMaterial.map = ringTexture;
+        // Si hay segmentos de anillos definidos, crear anillos múltiples
+        if (this.data.ringSegments && this.data.ringSegments.length > 0) {
+            this.rings = new THREE.Group();
+            
+            this.data.ringSegments.forEach((segment, index) => {
+                const innerRadius = this.size * segment.innerRadius;
+                const outerRadius = this.size * segment.outerRadius;
+                
+                const ringGeometry = new THREE.RingGeometry(innerRadius, outerRadius, 128);
+                const ringMaterial = new THREE.MeshBasicMaterial({
+                    color: segment.color || this.data.ringColor || 0xC0C0C0,
+                    side: THREE.DoubleSide,
+                    transparent: true,
+                    opacity: segment.opacity || 0.7,
+                    depthWrite: false,
+                    depthTest: true,
+                    blending: THREE.NormalBlending
+                });
+                
+                // Añadir textura para mayor realismo
+                const ringTexture = this.createRingTexture(segment.color);
+                ringMaterial.map = ringTexture;
+                
+                const ringMesh = new THREE.Mesh(ringGeometry, ringMaterial);
+                ringMesh.rotation.x = Math.PI / 2;
+                
+                this.rings.add(ringMesh);
+            });
+        } else {
+            // Anillo simple (compatibilidad con planetas sin segmentos)
+            const innerRadius = this.size * (this.data.ringInnerRadius || 1.5);
+            const outerRadius = this.size * (this.data.ringOuterRadius || 2.5);
+            
+            const ringGeometry = new THREE.RingGeometry(innerRadius, outerRadius, 64);
+            const ringMaterial = new THREE.MeshBasicMaterial({
+                color: this.data.ringColor || 0xC0C0C0,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.7,
+                depthWrite: false,
+                depthTest: true,
+                blending: THREE.NormalBlending
+            });
+            
+            this.rings = new THREE.Mesh(ringGeometry, ringMaterial);
+            this.rings.rotation.x = Math.PI / 2;
+            
+            // Añadir variación en los anillos
+            const ringTexture = this.createRingTexture();
+            ringMaterial.map = ringTexture;
+        }
         
         this.group.add(this.rings);
     }
     
-    createRingTexture() {
+    createRingTexture(ringColor = null) {
         const canvas = document.createElement('canvas');
         canvas.width = 512;
         canvas.height = 32;
         const context = canvas.getContext('2d');
         
-        // Crear patrón de anillos
+        // Convertir color hex a RGB si se proporciona
+        let baseColor = { r: 255, g: 255, b: 255 };
+        if (ringColor) {
+            baseColor.r = (ringColor >> 16) & 255;
+            baseColor.g = (ringColor >> 8) & 255;
+            baseColor.b = ringColor & 255;
+        }
+        
+        // Crear patrón de anillos más realista con variaciones
         const gradient = context.createLinearGradient(0, 0, canvas.width, 0);
-        for (let i = 0; i < 20; i++) {
-            const pos = i / 20;
-            const alpha = Math.random() * 0.5 + 0.3;
-            gradient.addColorStop(pos, `rgba(255, 255, 255, ${alpha})`);
+        for (let i = 0; i < 40; i++) {
+            const pos = i / 40;
+            const alpha = Math.random() * 0.6 + 0.2;
+            const brightness = Math.random() * 0.4 + 0.6;
+            
+            const r = Math.floor(baseColor.r * brightness);
+            const g = Math.floor(baseColor.g * brightness);
+            const b = Math.floor(baseColor.b * brightness);
+            
+            gradient.addColorStop(pos, `rgba(${r}, ${g}, ${b}, ${alpha})`);
         }
         
         context.fillStyle = gradient;
         context.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Añadir algunas líneas más oscuras para simular gaps en los anillos
+        context.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        for (let i = 0; i < 8; i++) {
+            const x = Math.random() * canvas.width;
+            context.fillRect(x, 0, 2, canvas.height);
+        }
         
         return new THREE.CanvasTexture(canvas);
     }
@@ -184,24 +236,31 @@ export class RealisticPlanet {
     createMoon(moonData, index) {
         let moonSize = Math.max(0.005, moonData.size * this.size * 0.35); // Escala de la luna reducida
 
-        // Escala de distancia revisada para mayor realismo y visibilidad
-        const moonDistanceScale = 400;
-        let moonDistance = moonData.distance * moonDistanceScale;
+        let moonDistance;
+        
+        // Para Saturno, usar las distancias en radios planetarios directamente
+        if (this.data.name === 'Saturno') {
+            moonDistance = moonData.distance * this.size; // distancia ya está en radios planetarios
+        } else {
+            // Escala de distancia revisada para mayor realismo y visibilidad
+            const moonDistanceScale = 400;
+            moonDistance = moonData.distance * moonDistanceScale;
 
-        // Para Júpiter y Saturno, aumentar el espaciado para evitar solapamientos
-        if (this.data.name === 'Júpiter' || this.data.name === 'Saturno') {
-            moonDistance *= 1.5;
-        }
+            // Para Júpiter, aumentar el espaciado para evitar solapamientos
+            if (this.data.name === 'Júpiter') {
+                moonDistance *= 1.5;
+            }
 
-        // Caso específico para la Luna de la Tierra
-        if (this.data.name === 'Tierra') {
-            moonDistance *= 0.8; // Acercar un poco la Luna
-        }
+            // Caso específico para la Luna de la Tierra
+            if (this.data.name === 'Tierra') {
+                moonDistance *= 0.8; // Acercar un poco la Luna
+            }
 
-        // Caso específico para las lunas de Marte
-        if (this.data.name === 'Marte') {
-            moonSize *= 0.05; // Reducir drásticamente el tamaño
-            moonDistance *= (moonData.name === 'Deimos') ? 1.8 : 1.2; // Aumentar separación
+            // Caso específico para las lunas de Marte
+            if (this.data.name === 'Marte') {
+                moonSize *= 0.05; // Reducir drásticamente el tamaño
+                moonDistance *= (moonData.name === 'Deimos') ? 1.8 : 1.2; // Aumentar separación
+            }
         }
 
         // Asegurar una distancia mínima para que la luna no quede dentro del planeta
