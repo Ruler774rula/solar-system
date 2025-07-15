@@ -4,7 +4,8 @@ import { ImprovedNoise } from 'jsm/math/ImprovedNoise.js';
 // sun
 
 function getCorona() {
-    const radius = 0.9;
+    // Ajustar el radio de la corona proporcionalmente al nuevo tamaño del Sol
+    const radius = 2.025; // Reducido proporcionalmente a la nueva escala (4.05/2)
     const material = new THREE.MeshBasicMaterial({
         color: 0xffff99,
         side: THREE.BackSide,
@@ -41,7 +42,9 @@ function getSun() {
         emissiveIntensity: 2.0,
         color: 0xffaa00,
     });
-    const geo = new THREE.IcosahedronGeometry(1, 6);
+    // Aumentar el tamaño del Sol para que sea más realista comparado con los planetas
+    // El Sol real es ~109 veces el radio de la Tierra, aquí usamos ~8 para mejor visualización
+    const geo = new THREE.IcosahedronGeometry(2.25, 6); // Reducido proporcionalmente a la nueva escala (4.5/2)
     const sun = new THREE.Mesh(geo, sunMat);
 
     const sunRimMat = getFresnelMat({ rimHex: 0xffff99, facingHex: 0x000000 });

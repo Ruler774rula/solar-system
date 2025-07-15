@@ -9,6 +9,7 @@ import { OBJLoader } from "jsm/loaders/OBJLoader.js";
 import getSun from "./getSun.js";
 import getNebula from "./getNebula.js";
 import getStarfield from "./getStarfield.js";
+import getDistantStarfield from "./getDistantStarfield.js";
 import getAsteroidBelt from "./getAsteroidBelt.js";
 import { RealisticPlanet } from "./realisticPlanet.js";
 import { OrbitalMechanics } from "./orbitalMechanics.js";
@@ -77,7 +78,7 @@ class RealisticSolarSystem {
         this.controls.enableDamping = true;
         this.controls.dampingFactor = 0.05;
         this.controls.minDistance = 2.0; // Distancia mínima fija muy pequeña
-        this.controls.maxDistance = 500; // Permitir alejar más la cámara
+        this.controls.maxDistance = 650; // Ajustado para que la órbita de Neptuno quede al límite
         this.controls.enablePan = true;
         this.controls.enableZoom = true;
     }
@@ -132,9 +133,13 @@ class RealisticSolarSystem {
         const asteroidBelt = getAsteroidBelt(data.objs);
         this.solarSystem.add(asteroidBelt);
         
-        // Crear campo de estrellas (más alejado)
-        const starfield = getStarfield({ numStars: 1500, size: 0.8, distance: 400 });
+        // Crear campo de estrellas entre Urano y Neptuno (19-30 AU * 20 = 380-600 unidades)
+        const starfield = getStarfield({ numStars: 1500, size: 0.8, distance: 500 });
         this.scene.add(starfield);
+        
+        // Crear starfield distante más allá de la órbita de Neptuno
+        const distantStarfield = getDistantStarfield({ numStars: 800, size: 0.3, distance: 750 });
+        this.scene.add(distantStarfield);
         
         // Configurar iluminación
         this.setupLighting();

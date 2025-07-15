@@ -57,11 +57,11 @@ export class RealisticPlanet {
     calculateDisplaySize() {
         if (this.options.realisticScale) {
             // Escala realista (muy pequeña para la mayoría de planetas)
-            return this.data.size * 0.1 * this.options.scale;
+            return this.data.size * 0.05 * this.options.scale; // Reducido de 0.1 a 0.05
         } else {
             // Escala visual mejorada para mejor visualización
-            const baseSize = Math.max(0.1, this.data.size * 0.2);
-            return Math.min(baseSize * this.options.scale, 2.0); // Limitar tamaño máximo
+            const baseSize = Math.max(0.05, this.data.size * 0.1); // Reducido de 0.1 y 0.2 a 0.05 y 0.1
+            return Math.min(baseSize * this.options.scale, 1.0); // Reducido de 2.0 a 1.0
         }
     }
     
@@ -256,7 +256,7 @@ export class RealisticPlanet {
     }
     
     createMoon(moonData, index) {
-        let moonSize = Math.max(0.005, moonData.size * this.size * 0.35); // Escala de la luna reducida
+        let moonSize = Math.max(0.0025, moonData.size * this.size * 0.175); // Escala de la luna reducida a la mitad
 
         let moonDistance;
         
@@ -354,7 +354,7 @@ export class RealisticPlanet {
     
     createOrbit() {
         this.orbitLine = this.orbitalMechanics.createOrbitLine(
-            this.semiMajorAxis * 10, // Escalar para visualización
+            this.semiMajorAxis * 20, // Reducido de 40 a 20 para mejor renderizado
             this.eccentricity,
             this.inclination
         );
@@ -463,7 +463,7 @@ export class RealisticPlanet {
     update(time, camera = null, system = null) {
         // Calcular nueva posición orbital
         const position = this.orbitalMechanics.calculateOrbitalPosition({
-            semiMajorAxis: this.semiMajorAxis * 10, // Escalar para visualización
+            semiMajorAxis: this.semiMajorAxis * 20, // Reducido de 40 a 20 para mejor renderizado
             eccentricity: this.eccentricity,
             orbitalSpeed: this.orbitalSpeed * this.orbitalMechanics.timeScale,
             startAngle: this.startAngle,
@@ -471,7 +471,7 @@ export class RealisticPlanet {
         }, time);
         
         this.group.position.copy(position);
-        this.currentDistance = position.length() / 10; // Convertir de vuelta a AU
+        this.currentDistance = position.length() / 20; // Ajustado al nuevo factor
         
         // Actualizar temperatura
         this.temperature = this.orbitalMechanics.calculatePlanetTemperature(
@@ -489,7 +489,7 @@ export class RealisticPlanet {
         
         // Actualizar lunas
         this.moons.forEach(moon => {
-            moon.angle += moon.speed * this.orbitalMechanics.timeScale * 10; // Factor de visualización para lunas
+            moon.angle += moon.speed * this.orbitalMechanics.timeScale * 20; // Reducido de 40 a 20 para nueva escala
             moon.mesh.position.x = Math.cos(moon.angle) * moon.distance;
             moon.mesh.position.z = Math.sin(moon.angle) * moon.distance;
 

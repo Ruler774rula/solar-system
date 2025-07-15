@@ -4,6 +4,9 @@
  */
 
 import * as THREE from 'three';
+import { LineMaterial } from "jsm/lines/LineMaterial.js";
+import { Line2 } from "jsm/lines/Line2.js";
+import { LineGeometry } from "jsm/lines/LineGeometry.js";
 
 export class OrbitalMechanics {
     constructor() {
@@ -117,15 +120,24 @@ export class OrbitalMechanics {
             points.push(point);
         }
         
-        const geometry = new THREE.BufferGeometry().setFromPoints(points);
-        const material = new THREE.LineBasicMaterial({
-            color: 0x888888, // Color más claro
-            transparent: true,
-            opacity: 0.7, // Más opaco
-            linewidth: 2 // Más grueso (aunque limitado en WebGL)
+        // Convertir puntos a array plano para LineGeometry
+        const positions = [];
+        points.forEach(point => {
+            positions.push(point.x, point.y, point.z);
         });
         
-        return new THREE.Line(geometry, material);
+        const geometry = new LineGeometry();
+        geometry.setPositions(positions);
+        
+        const material = new LineMaterial({
+            color: 0x888888,
+            linewidth: 3, // Líneas más gruesas que se ven bien al hacer zoom
+            transparent: true,
+            opacity: 0.7,
+            resolution: new THREE.Vector2(window.innerWidth, window.innerHeight)
+        });
+        
+        return new Line2(geometry, material);
     }
 
     /**
@@ -197,7 +209,7 @@ export class OrbitalMechanics {
      * @param {number} scale - Factor de escala
      * @returns {number} Distancia en unidades de simulación
      */
-    auToSimulationUnits(au, scale = 10) {
+    auToSimulationUnits(au, scale = 20) {
         return au * scale;
     }
 

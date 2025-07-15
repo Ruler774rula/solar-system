@@ -30,8 +30,8 @@ function getInstanced({ distance, mesh, size }) {
 function getAsteroidBelt(objs) {
     const group = new THREE.Group();
     objs.forEach((obj) => {
-        // Posicionar entre Marte (15.24) y Júpiter (52.04) en escala 10x
-        const asteroids = getInstanced({ distance: 28, mesh: obj, size: 0.08 }); // Más grandes
+        // Posicionar entre Marte y Júpiter con nueva escala 30x
+        const asteroids = getInstanced({ distance: 56, mesh: obj, size: 0.08 }); // Ajustado al nuevo factor de escala (20x)
         group.add(asteroids);
     });
     return group;

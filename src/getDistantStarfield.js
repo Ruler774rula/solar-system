@@ -1,8 +1,9 @@
 import * as THREE from "three";
 
-export default function getStarfield({ numStars = 500, size = 0.2, distance = 500 } = {}) { // Entre Urano y Neptuno
+export default function getDistantStarfield({ numStars = 800, size = 0.3, distance = 750 } = {}) {
   function randomSpherePoint() {
-    const radius = Math.random() * 120 + distance; // Entre 500-620 unidades (Urano-Neptuno)
+    // Starfield más lejano que la órbita de Neptuno (30 AU * 20 = 600 unidades)
+    const radius = Math.random() * 250 + distance; // Entre 750 y 1000 unidades
     const u = Math.random();
     const v = Math.random();
     const theta = 2 * Math.PI * u;
@@ -13,7 +14,7 @@ export default function getStarfield({ numStars = 500, size = 0.2, distance = 50
 
     return {
       pos: new THREE.Vector3(x, y, z),
-      hue: 0.6, // radius * 0.02 + 0.5
+      hue: 0.6 + Math.random() * 0.3, // Variación de color más amplia
       minDist: radius,
     };
   }
@@ -25,7 +26,8 @@ export default function getStarfield({ numStars = 500, size = 0.2, distance = 50
     let p = randomSpherePoint();
     const { pos, hue } = p;
     positions.push(p);
-    col = new THREE.Color().setHSL(hue, 0.2, Math.random());
+    // Estrellas más brillantes y con más variación de color
+    col = new THREE.Color().setHSL(hue, 0.4, Math.random() * 0.5 + 0.5);
     verts.push(pos.x, pos.y, pos.z);
     colors.push(col.r, col.g, col.b);
   }
