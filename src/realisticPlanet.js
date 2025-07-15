@@ -88,10 +88,28 @@ export class RealisticPlanet {
             alphaTest: 0.1
         });
         
-        this.mesh = new THREE.Mesh(geometry, material);
-        this.mesh.castShadow = true;
-        this.mesh.receiveShadow = true;
+        // Crear la esfera del planeta
+        const planetSphere = new THREE.Mesh(geometry, material);
+        planetSphere.castShadow = true;
+        planetSphere.receiveShadow = true;
+        
+        // Crear un grupo para manejar la inclinación axial
+        this.mesh = new THREE.Group();
         this.mesh.userData = { planet: this, type: 'planet' };
+        
+        // Aplicar inclinación axial al grupo
+        if (this.data.axialTilt !== undefined) {
+            // Convertir grados a radianes
+            const axialTiltRad = (this.data.axialTilt * Math.PI) / 180;
+            // Aplicar la inclinación del eje del planeta
+            this.mesh.rotation.z = axialTiltRad;
+        }
+        
+        // Añadir la esfera al grupo inclinado
+        this.mesh.add(planetSphere);
+        
+        // Guardar referencia a la esfera para la rotación
+        this.planetSphere = planetSphere;
         
         // Efecto Fresnel para el borde
         if (this.data.hasAtmosphere) {
@@ -101,7 +119,7 @@ export class RealisticPlanet {
             });
             const fresnelMesh = new THREE.Mesh(geometry, fresnelMat);
             fresnelMesh.scale.setScalar(1.01);
-            this.mesh.add(fresnelMesh);
+            planetSphere.add(fresnelMesh);
             
             // Atmósfera adicional
             this.createAtmosphere();
@@ -184,13 +202,11 @@ export class RealisticPlanet {
             ringMaterial.map = ringTexture;
         }
         
-        // Aplicar inclinación axial a los anillos
+        // Aplicar inclinación axial a los anillos (están en el plano ecuatorial del planeta)
         if (this.rings && this.data.axialTilt !== undefined) {
             // Convertir grados a radianes
             const axialTiltRad = (this.data.axialTilt * Math.PI) / 180;
-            
             // Aplicar la inclinación del eje del planeta a los anillos
-            // Los anillos están en el plano ecuatorial del planeta
             this.rings.rotation.z = axialTiltRad;
         }
         
@@ -285,8 +301,8 @@ export class RealisticPlanet {
 
             // Caso específico para las lunas de Marte
             if (this.data.name === 'Marte') {
-                moonSize *= 0.05; // Reducir drásticamente el tamaño
-                moonDistance *= (moonData.name === 'Deimos') ? 1.8 : 1.2; // Aumentar separación
+                moonSize *= 0.08; // Aumentar ligeramente el tamaño para mejor visibilidad
+                moonDistance *= (moonData.name === 'Deimos') ? 2.5 : 1.5; // Mejor separación proporcional a las distancias reales
             }
         }
 
@@ -489,7 +505,7 @@ export class RealisticPlanet {
         const position = this.orbitalMechanics.calculateOrbitalPosition({
             semiMajorAxis: this.semiMajorAxis * 20, // Reducido de 40 a 20 para mejor renderizado
             eccentricity: this.eccentricity,
-            orbitalSpeed: this.orbitalSpeed,
+            orbitalSpeed: -this.orbitalSpeed, // Invertir dirección orbital
             startAngle: this.startAngle,
             inclination: this.inclination
         }, this.accumulatedTime);
@@ -505,20 +521,27 @@ export class RealisticPlanet {
             0.3   // Albedo promedio
         );
         
-        // Rotación del planeta
-        if (this.mesh) {
-            const rotationSpeed = (2 * Math.PI) / this.data.rotationPeriod * 0.001;
-            this.mesh.rotation.y += rotationSpeed * deltaTime * this.orbitalMechanics.timeScale;
-        }
+
         
-        // Actualizar lunas
+        // Rotación del planeta sobre su propio eje
+        if (this.planetSphere) {
+            const rotationPeriod = Math.abs(this.data.rotationPeriod); // Usar valor absoluto
+            const rotationSpeed = 2 * Math.PI / (rotationPeriod * 3600); // rad/s
+            // Factor de aceleración muy alto para hacer visible la rotación
+            // Si el período original era negativo, invertir la dirección
+            const direction = this.data.rotationPeriod < 0 ? -1 : 1;
+            this.planetSphere.rotation.y += rotationSpeed * direction * this.orbitalMechanics.timeScale * 200000;
+        }
         this.moons.forEach(moon => {
             // Aplicar velocidad orbital realista sin factor adicional
-            moon.angle += moon.speed * deltaTime * this.orbitalMechanics.timeScale;
+            // Invertir dirección orbital de las lunas (excepto las que ya tienen órbita retrógrada)
+            const moonDirection = moon.orbitalPeriod < 0 ? 1 : -1; // Si ya es retrógrada, mantener dirección
+            moon.angle += moon.speed * deltaTime * this.orbitalMechanics.timeScale * moonDirection;
             moon.mesh.position.x = Math.cos(moon.angle) * moon.distance;
             moon.mesh.position.z = Math.sin(moon.angle) * moon.distance;
 
-            // Rotación síncrona: la luna siempre muestra la misma cara al planeta.
+            // Rotación síncrona: la luna siempre muestra la misma cara al planeta
+            // La mayoría de las lunas tienen rotación síncrona (período de rotación = período orbital)
             moon.mesh.rotation.y = moon.angle;
             
             // Actualizar etiqueta de la luna si existe
@@ -595,9 +618,9 @@ export class RealisticPlanet {
     setSelected(selected) {
         this.isSelected = selected;
         
-        if (this.mesh && this.mesh.children.length > 0) {
+        if (this.planetSphere && this.planetSphere.children.length > 0) {
             // Cambiar intensidad del efecto Fresnel
-            const fresnelMesh = this.mesh.children[0];
+            const fresnelMesh = this.planetSphere.children[0];
             if (fresnelMesh && fresnelMesh.material.uniforms) {
                 fresnelMesh.material.uniforms.fresnelBias.value = selected ? 0.2 : 0.1;
                 fresnelMesh.material.uniforms.fresnelScale.value = selected ? 1.5 : 1.0;
@@ -658,9 +681,9 @@ export class RealisticPlanet {
     
     dispose() {
         // Limpiar recursos
-        if (this.mesh) {
-            this.mesh.geometry.dispose();
-            this.mesh.material.dispose();
+        if (this.planetSphere) {
+            this.planetSphere.geometry.dispose();
+            this.planetSphere.material.dispose();
         }
         
         if (this.atmosphere) {

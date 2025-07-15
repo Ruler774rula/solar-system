@@ -23,6 +23,7 @@ export class UI {
         this.setupEventListeners();
         this.updatePlanetList();
         this.setDefaultValues();
+        this.initCustomScrollBehavior();
         this.hideLoading();
         this.isInitialized = true;
     }
@@ -135,6 +136,9 @@ export class UI {
             
             this.elements.planetItems.appendChild(planetItem);
         });
+        
+        // Verificar si necesita scroll y agregar clase correspondiente
+        this.checkScrollIndicators();
     }
     
     selectPlanet(planet) {
@@ -285,6 +289,9 @@ export class UI {
                 e.currentTarget.style.backgroundColor = 'transparent';
             });
         });
+        
+        // Verificar si necesita scroll después de actualizar el contenido
+        setTimeout(() => this.checkScrollIndicators(), 100);
     }
     
     selectMoon(moonName) {
@@ -485,6 +492,74 @@ export class UI {
         const existingButton = document.getElementById('show-ui-btn');
         if (existingButton) {
             existingButton.remove();
+        }
+    }
+    
+    // Método para verificar si los elementos necesitan scroll y mostrar indicadores
+    checkScrollIndicators() {
+        // Verificar panel de información
+        if (this.elements.planetInfo && this.elements.planetInfo.parentElement) {
+            const infoPanel = this.elements.planetInfo.parentElement;
+            const hasVerticalScroll = infoPanel.scrollHeight > infoPanel.clientHeight;
+            
+            if (hasVerticalScroll) {
+                infoPanel.classList.add('has-scroll');
+            } else {
+                infoPanel.classList.remove('has-scroll');
+            }
+        }
+        
+        // Verificar lista de planetas
+        if (this.elements.planetItems && this.elements.planetItems.parentElement) {
+            const planetList = this.elements.planetItems.parentElement.parentElement;
+            const hasVerticalScroll = planetList.scrollHeight > planetList.clientHeight;
+            
+            if (hasVerticalScroll) {
+                planetList.classList.add('has-scroll');
+            } else {
+                planetList.classList.remove('has-scroll');
+            }
+        }
+    }
+    
+    // Método para personalizar el comportamiento del scroll
+    initCustomScrollBehavior() {
+        // Agregar efectos de scroll suave para elementos específicos
+        const scrollableElements = ['.info-panel', '.planet-list'];
+        
+        scrollableElements.forEach(selector => {
+            const element = document.querySelector(selector);
+            if (element) {
+                // Agregar listener para detectar cambios en el scroll
+                element.addEventListener('scroll', () => {
+                    this.handleScrollEffects(element);
+                });
+                
+                // Agregar listener para redimensionamiento
+                const resizeObserver = new ResizeObserver(() => {
+                    this.checkScrollIndicators();
+                });
+                resizeObserver.observe(element);
+            }
+        });
+    }
+    
+    // Efectos adicionales durante el scroll
+    handleScrollEffects(element) {
+        // Agregar efecto de fade en los bordes durante el scroll
+        const scrollTop = element.scrollTop;
+        const scrollHeight = element.scrollHeight;
+        const clientHeight = element.clientHeight;
+        
+        // Calcular opacidad del indicador inferior
+        const bottomOpacity = (scrollHeight - scrollTop - clientHeight) > 10 ? 1 : 0;
+        
+        // Aplicar efectos visuales si es necesario
+        if (element.classList.contains('has-scroll')) {
+            const indicator = element.querySelector('::after');
+            if (indicator) {
+                indicator.style.opacity = bottomOpacity;
+            }
         }
     }
 }

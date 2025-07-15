@@ -111,14 +111,14 @@ export const PLANET_DATA = {
             {
                 name: 'Fobos',
                 size: 0.008, // Escala aumentada (22 km vs 12 km Deimos)
-                distance: 0.000063,
+                distance: 0.0000627, // 9,377 km convertido a AU (9377/149597870.7)
                 orbitalPeriod: 0.32,
                 color: 0x8B7355
             },
             {
                 name: 'Deimos',
                 size: 0.005, // Escala aumentada pero menor que Fobos
-                distance: 0.000157,
+                distance: 0.0001568, // 23,460 km convertido a AU (23460/149597870.7)
                 orbitalPeriod: 1.26,
                 color: 0x8B7355
             }

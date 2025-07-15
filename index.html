@@ -58,6 +58,111 @@
         overflow-y: auto;
       }
       
+      /* Estilos personalizados para barras de scroll */
+      .info-panel::-webkit-scrollbar,
+      .planet-list::-webkit-scrollbar {
+        width: 8px;
+      }
+      
+      .info-panel::-webkit-scrollbar-track,
+      .planet-list::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 4px;
+        margin: 4px;
+      }
+      
+      .info-panel::-webkit-scrollbar-thumb,
+      .planet-list::-webkit-scrollbar-thumb {
+        background: linear-gradient(180deg, #4CAF50, #2E7D32);
+        border-radius: 4px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      }
+      
+      .info-panel::-webkit-scrollbar-thumb:hover,
+      .planet-list::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(180deg, #66BB6A, #4CAF50);
+        box-shadow: 0 2px 8px rgba(76, 175, 80, 0.4);
+      }
+      
+      .info-panel::-webkit-scrollbar-thumb:active,
+      .planet-list::-webkit-scrollbar-thumb:active {
+        background: linear-gradient(180deg, #81C784, #66BB6A);
+      }
+      
+      .info-panel::-webkit-scrollbar-corner,
+      .planet-list::-webkit-scrollbar-corner {
+        background: rgba(255, 255, 255, 0.05);
+      }
+      
+      /* Estilos para Firefox */
+      .info-panel,
+      .planet-list {
+        scrollbar-width: thin;
+        scrollbar-color: #4CAF50 rgba(255, 255, 255, 0.05);
+      }
+      
+      /* Efectos de transición suaves para el scroll */
+      .info-panel,
+      .planet-list {
+        scroll-behavior: smooth;
+      }
+      
+      /* Estilos adicionales para elementos con scroll dentro del panel de información */
+      .info-panel .info-grid::-webkit-scrollbar {
+        width: 6px;
+      }
+      
+      .info-panel .info-grid::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 3px;
+      }
+      
+      .info-panel .info-grid::-webkit-scrollbar-thumb {
+        background: linear-gradient(180deg, #4CAF50, #2E7D32);
+        border-radius: 3px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+      }
+      
+      .info-panel .info-grid::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(180deg, #66BB6A, #4CAF50);
+      }
+      
+      /* Indicador visual cuando hay contenido para hacer scroll */
+      .planet-list::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 20px;
+        background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+      
+      .planet-list.has-scroll::after {
+        opacity: 1;
+      }
+      
+      .info-panel::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 20px;
+        background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+      
+      .info-panel.has-scroll::after {
+        opacity: 1;
+      }
+      
       .planet-list {
         position: absolute;
         bottom: 20px;
