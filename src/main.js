@@ -33,11 +33,11 @@ class RealisticSolarSystem {
         // Estado de la simulación
         this.isPaused = false;
         this.selectedPlanet = null;
+        this.selectedMoon = null;
         this.followingPlanet = null;
         this.lastPlanetPosition = new THREE.Vector3();
         this.showOrbits = true;
         this.showLabels = true;
-        this.showTrails = false;
         this.realisticScale = true;
         this.labelsHiddenForTransition = false;
         
@@ -49,6 +49,98 @@ class RealisticSolarSystem {
         this.ui = null;
         
         this.init();
+    }
+    
+    selectMoon(moon, parentPlanet) {
+        // Deseleccionar luna anterior
+        if (this.selectedMoon && this.selectedMoon.label) {
+            this.selectedMoon.label.visible = false;
+        }
+        
+        this.selectedMoon = moon;
+        
+        if (moon) {
+            // Crear label para la luna si no existe
+            if (!moon.label) {
+                this.createMoonLabel(moon);
+            }
+            
+            // Mostrar label de la luna
+            if (moon.label) {
+                moon.label.visible = true;
+            }
+            
+            // Hacer zoom a la luna
+            this.followMoon(moon, parentPlanet);
+        }
+    }
+    
+    createMoonLabel(moon) {
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        canvas.width = 512;
+        canvas.height = 128;
+        
+        // Sin fondo - transparente
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Texto del label con contorno para mejor visibilidad
+        context.fillStyle = 'white';
+        context.strokeStyle = 'black';
+        context.lineWidth = 3;
+        context.font = 'bold 24px Arial';
+        context.textAlign = 'center';
+        
+        // Dibujar contorno
+        context.strokeText(moon.name, canvas.width / 2, canvas.height / 2 + 12);
+        // Dibujar texto
+        context.fillText(moon.name, canvas.width / 2, canvas.height / 2 + 12);
+        
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.generateMipmaps = false;
+        texture.minFilter = THREE.LinearFilter;
+        texture.magFilter = THREE.LinearFilter;
+        
+        const material = new THREE.SpriteMaterial({ 
+            map: texture,
+            transparent: true,
+            alphaTest: 0.1
+        });
+        
+        moon.label = new THREE.Sprite(material);
+        moon.label.scale.set(0.05, 0.0125, 1);
+        moon.label.userData = { moon: moon, type: 'moonLabel' };
+        
+        this.scene.add(moon.label);
+    }
+    
+    followMoon(moon, parentPlanet) {
+        // Calcular la posición mundial de la luna
+        const moonWorldPosition = new THREE.Vector3();
+        moon.mesh.getWorldPosition(moonWorldPosition);
+        
+        // Ocultar todas las etiquetas antes del zoom
+        this.hideLabelsForTransition();
+        
+        // Calcular distancia apropiada para la luna
+        const moonSize = moon.mesh.geometry.parameters.radius;
+        const distance = Math.max(moonSize * 8, 0.02); // Distancia mínima muy pequeña para lunas
+        
+        // Ajustar distancia mínima de la cámara para la luna
+        this.controls.minDistance = Math.max(moonSize * 2, 0.01);
+        
+        // Posicionar la cámara cerca de la luna
+        const direction = new THREE.Vector3(1, 0.5, 1).normalize();
+        this.camera.position.copy(moonWorldPosition).add(direction.multiplyScalar(distance));
+        this.controls.target.copy(moonWorldPosition);
+        
+        // Actualizar controles
+        this.controls.update();
+        
+        // Mostrar las etiquetas después del zoom con un pequeño delay
+        setTimeout(() => {
+            this.showLabelsAfterTransition();
+        }, 100);
     }
     
     init() {
@@ -239,6 +331,11 @@ class RealisticSolarSystem {
                 this.selectPlanet(intersectedObject.userData.planet);
             } else if (intersectedObject.userData.parent) {
                 this.selectPlanet(intersectedObject.userData.parent);
+            } else if (intersectedObject.userData.moon) {
+                // Clic directo en una luna
+                const moon = intersectedObject.userData.moon;
+                const parentPlanet = intersectedObject.userData.parent;
+                this.selectMoon(moon, parentPlanet);
             }
         }
         // Removido: no deseleccionar planeta al hacer clic fuera
@@ -290,6 +387,11 @@ class RealisticSolarSystem {
         // Deseleccionar planeta anterior
         if (this.selectedPlanet) {
             this.selectedPlanet.setSelected(false);
+        }
+        
+        // Deseleccionar luna anterior si existe
+        if (this.selectedMoon) {
+            this.selectedMoon = null;
         }
         
         this.selectedPlanet = planet;
@@ -392,6 +494,18 @@ class RealisticSolarSystem {
         this.showOrbits = !this.showOrbits;
         this.planets.forEach(planet => {
             planet.setShowOrbit(this.showOrbits);
+            // También ocultar/mostrar las órbitas de las lunas
+            if (planet.moons) {
+                planet.moons.forEach(moon => {
+                    if (moon.group && moon.group.children.length > 1) {
+                        // El segundo hijo del grupo de la luna es la órbita
+                        const moonOrbit = moon.group.children[1];
+                        if (moonOrbit) {
+                            moonOrbit.visible = this.showOrbits;
+                        }
+                    }
+                });
+            }
         });
     }
     
@@ -402,16 +516,85 @@ class RealisticSolarSystem {
         });
     }
     
-    toggleTrails() {
-        this.showTrails = !this.showTrails;
-        this.planets.forEach(planet => {
-            planet.setShowTrail(this.showTrails);
-            if (this.showTrails && planet.trail) {
-                this.scene.add(planet.trail);
-            } else if (planet.trail) {
-                this.scene.remove(planet.trail);
+    selectMoon(moon, parentPlanet) {
+        // Deseleccionar luna anterior
+        if (this.selectedMoon && this.selectedMoon.label) {
+            this.scene.remove(this.selectedMoon.label);
+            this.selectedMoon.label.material.dispose();
+            this.selectedMoon.label.material.map.dispose();
+            this.selectedMoon.label = null;
+        }
+        
+        this.selectedMoon = moon;
+        
+        if (moon) {
+            // Crear y mostrar label para la luna
+            if (!moon.label) {
+                moon.label = this.createMoonLabel(moon.name);
+                this.scene.add(moon.label);
             }
-        });
+            
+            // Seguir la luna
+            this.followMoon(moon, parentPlanet);
+        }
+    }
+    
+    createMoonLabel(moonName) {
+        // Crear canvas para el texto
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        canvas.width = 256;
+        canvas.height = 64;
+        
+        // Configurar el texto
+        context.font = 'Bold 24px Arial';
+        context.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        context.strokeStyle = 'rgba(0, 0, 0, 0.8)';
+        context.lineWidth = 3;
+        context.textAlign = 'center';
+        context.textBaseline = 'middle';
+        
+        // Dibujar el texto con contorno
+        const x = canvas.width / 2;
+        const y = canvas.height / 2;
+        context.strokeText(moonName, x, y);
+        context.fillText(moonName, x, y);
+        
+        // Crear textura y sprite
+        const texture = new THREE.CanvasTexture(canvas);
+        const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
+        const sprite = new THREE.Sprite(spriteMaterial);
+        sprite.scale.set(0.5, 0.125, 1);
+        
+        return sprite;
+    }
+    
+    followMoon(moon, parentPlanet) {
+        // Calcular posición mundial de la luna
+        const moonWorldPosition = new THREE.Vector3();
+        moon.mesh.getWorldPosition(moonWorldPosition);
+        
+        // Ocultar etiquetas durante la transición
+        this.hideLabelsForTransition();
+        
+        // Determinar distancia apropiada basada en el tamaño de la luna
+        const moonSize = moon.mesh.geometry.parameters.radius || 0.01;
+        const distance = Math.max(moonSize * 8, 0.05); // Distancia mínima muy pequeña para lunas
+        const minDistance = Math.max(moonSize * 2, 0.02);
+        
+        // Posicionar cámara
+        const direction = new THREE.Vector3(1, 0.5, 1).normalize();
+        this.camera.position.copy(moonWorldPosition).add(direction.multiplyScalar(distance));
+        this.controls.target.copy(moonWorldPosition);
+        this.controls.minDistance = minDistance;
+        
+        // Actualizar controles
+        this.controls.update();
+        
+        // Mostrar etiquetas después de un delay
+        setTimeout(() => {
+            this.showLabelsAfterTransition();
+        }, 500);
     }
     
     setTimeScale(scale) {

@@ -24,7 +24,7 @@ export class RealisticPlanet {
         this.eccentricity = this.data.eccentricity;
         this.inclination = this.data.inclination;
         this.orbitalSpeed = this.orbitalMechanics.calculateOrbitalSpeed(this.semiMajorAxis);
-        this.startAngle = Math.random() * Math.PI * 2;
+        this.startAngle = 0; // Ángulo inicial fijo para alineación correcta
         
         // Propiedades físicas
         this.size = this.calculateDisplaySize();
@@ -47,6 +47,11 @@ export class RealisticPlanet {
         this.showOrbit = true;
         this.showLabel = true;
         this.showTrail = false;
+        
+        // Control de tiempo para evitar saltos de posición
+        this.accumulatedTime = 0;
+        this.lastUpdateTime = 0;
+        this.isFirstUpdate = true;
         
         this.createPlanet();
         this.createOrbit();
@@ -275,7 +280,7 @@ export class RealisticPlanet {
 
             // Caso específico para la Luna de la Tierra
             if (this.data.name === 'Tierra') {
-                moonDistance *= 0.8; // Acercar un poco la Luna
+                moonDistance *= 0.75; // Acercar un poco la Luna
             }
 
             // Caso específico para las lunas de Marte
@@ -307,8 +312,6 @@ export class RealisticPlanet {
         const moonMesh = new THREE.Mesh(moonGeometry, moonMaterial);
         moonMesh.castShadow = true;
         moonMesh.receiveShadow = true;
-        moonMesh.userData = { moon: moonData, parent: this, type: 'moon' };
-        
         const moonGroup = new THREE.Group();
         moonGroup.add(moonMesh);
         
@@ -325,6 +328,9 @@ export class RealisticPlanet {
             angle: Math.random() * Math.PI * 2,
             speed: (2 * Math.PI) / moonData.orbitalPeriod
         };
+        
+        // Ahora configurar el userData correctamente con el objeto moon completo
+        moonMesh.userData = { moon: moon, parent: this, type: 'moon' };
         
         return moon;
     }
@@ -344,9 +350,9 @@ export class RealisticPlanet {
         
         const geometry = new THREE.BufferGeometry().setFromPoints(points);
         const material = new THREE.LineBasicMaterial({
-            color: 0x666666,
+            color: 0xaaaaaa,  // Color más claro para mejor visibilidad
             transparent: true,
-            opacity: 0.2
+            opacity: 0.6      // Opacidad aumentada de 0.2 a 0.6
         });
         
         return new THREE.Line(geometry, material);
@@ -461,14 +467,26 @@ export class RealisticPlanet {
     }
     
     update(time, camera = null, system = null) {
-        // Calcular nueva posición orbital
+        // Manejar primera actualización
+        if (this.isFirstUpdate) {
+            this.lastUpdateTime = time;
+            this.isFirstUpdate = false;
+            return;
+        }
+        
+        // Calcular delta de tiempo y acumular según timeScale
+        const deltaTime = time - this.lastUpdateTime;
+        this.accumulatedTime += deltaTime * this.orbitalMechanics.timeScale;
+        this.lastUpdateTime = time;
+        
+        // Calcular nueva posición orbital usando tiempo acumulado
         const position = this.orbitalMechanics.calculateOrbitalPosition({
             semiMajorAxis: this.semiMajorAxis * 20, // Reducido de 40 a 20 para mejor renderizado
             eccentricity: this.eccentricity,
-            orbitalSpeed: this.orbitalSpeed * this.orbitalMechanics.timeScale,
+            orbitalSpeed: this.orbitalSpeed,
             startAngle: this.startAngle,
             inclination: this.inclination
-        }, time);
+        }, this.accumulatedTime);
         
         this.group.position.copy(position);
         this.currentDistance = position.length() / 20; // Ajustado al nuevo factor
@@ -484,17 +502,36 @@ export class RealisticPlanet {
         // Rotación del planeta
         if (this.mesh) {
             const rotationSpeed = (2 * Math.PI) / this.data.rotationPeriod * 0.001;
-            this.mesh.rotation.y += rotationSpeed * this.orbitalMechanics.timeScale;
+            this.mesh.rotation.y += rotationSpeed * deltaTime * this.orbitalMechanics.timeScale;
         }
         
         // Actualizar lunas
         this.moons.forEach(moon => {
-            moon.angle += moon.speed * this.orbitalMechanics.timeScale * 20; // Reducido de 40 a 20 para nueva escala
+            moon.angle += moon.speed * deltaTime * this.orbitalMechanics.timeScale * 20; // Reducido de 40 a 20 para nueva escala
             moon.mesh.position.x = Math.cos(moon.angle) * moon.distance;
             moon.mesh.position.z = Math.sin(moon.angle) * moon.distance;
 
             // Rotación síncrona: la luna siempre muestra la misma cara al planeta.
             moon.mesh.rotation.y = moon.angle;
+            
+            // Actualizar etiqueta de la luna si existe
+            if (moon.label && moon.label.visible) {
+                // Calcular posición mundial de la luna
+                const moonWorldPosition = new THREE.Vector3();
+                moon.mesh.getWorldPosition(moonWorldPosition);
+                
+                // Posicionar la etiqueta encima de la luna
+                const moonSize = moon.mesh.geometry.parameters.radius;
+                moon.label.position.copy(moonWorldPosition);
+                moon.label.position.y += moonSize * 2 + 0.01;
+                
+                // Escalado basado en la distancia de la cámara
+                if (camera) {
+                    const distance = camera.position.distanceTo(moonWorldPosition);
+                    const scale = Math.max(0.01, distance * 0.05);
+                    moon.label.scale.set(scale, scale * 0.25, 1);
+                }
+            }
         });
 
         
@@ -646,6 +683,11 @@ export class RealisticPlanet {
         this.moons.forEach(moon => {
             moon.mesh.geometry.dispose();
             moon.mesh.material.dispose();
+            
+            // Limpiar etiqueta de la luna si existe
+            if (moon.label) {
+                moon.label.material.dispose();
+            }
         });
     }
 }

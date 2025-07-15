@@ -95,18 +95,44 @@
         border-radius: 4px;
         cursor: pointer;
         font-size: 12px;
-        transition: all 0.3s ease;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         margin: 2px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      }
+      
+      .ui-button::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s;
       }
       
       .ui-button:hover {
         background: rgba(76, 175, 80, 0.4);
-        transform: translateY(-1px);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
+        border-color: #66BB6A;
+      }
+      
+      .ui-button:hover::before {
+        left: 100%;
+      }
+      
+      .ui-button:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
       }
       
       .ui-button.active {
         background: #4CAF50;
         color: #000;
+        box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
       }
       
       .ui-slider {
@@ -123,17 +149,37 @@
         margin: 2px 0;
         border-radius: 4px;
         cursor: pointer;
-        transition: background 0.3s ease;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         border: 1px solid transparent;
+        position: relative;
+        overflow: hidden;
+      }
+      
+      .planet-item::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+        transition: left 0.4s;
       }
       
       .planet-item:hover {
         background: rgba(255, 255, 255, 0.1);
+        transform: translateX(5px);
+        box-shadow: 0 2px 8px rgba(255, 255, 255, 0.1);
+      }
+      
+      .planet-item:hover::before {
+        left: 100%;
       }
       
       .planet-item.selected {
         background: rgba(76, 175, 80, 0.3);
         border-color: #4CAF50;
+        box-shadow: 0 0 10px rgba(76, 175, 80, 0.4);
       }
       
       .info-grid {
@@ -147,6 +193,36 @@
         background: rgba(255, 255, 255, 0.05);
         padding: 8px;
         border-radius: 4px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      
+      .info-item.moon-clickable {
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid transparent;
+      }
+      
+      .info-item.moon-clickable::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(76, 175, 80, 0.2), transparent);
+        transition: left 0.4s;
+      }
+      
+      .info-item.moon-clickable:hover {
+        background: rgba(76, 175, 80, 0.1);
+        border-color: rgba(76, 175, 80, 0.5);
+        transform: scale(1.02);
+        box-shadow: 0 2px 8px rgba(76, 175, 80, 0.2);
+      }
+      
+      .info-item.moon-clickable:hover::before {
+        left: 100%;
       }
       
       .info-label {
@@ -245,9 +321,7 @@
           <label class="ui-checkbox">
             <input type="checkbox" id="show-labels" checked> Mostrar Etiquetas
           </label>
-          <label class="ui-checkbox">
-            <input type="checkbox" id="show-trails"> Mostrar Estelas
-          </label>
+
         </div>
         
         <div class="ui-section">

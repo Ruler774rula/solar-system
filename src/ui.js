@@ -47,7 +47,6 @@ export class UI {
             timeScaleValue: document.getElementById('time-scale-value'),
             showOrbits: document.getElementById('show-orbits'),
             showLabels: document.getElementById('show-labels'),
-            showTrails: document.getElementById('show-trails'),
             exportDataBtn: document.getElementById('export-data-btn'),
             screenshotBtn: document.getElementById('screenshot-btn'),
             planetInfo: document.getElementById('planet-info'),
@@ -101,10 +100,6 @@ export class UI {
         
         this.elements.showLabels.addEventListener('change', (e) => {
             this.simulator.toggleLabels();
-        });
-        
-        this.elements.showTrails.addEventListener('change', (e) => {
-            this.simulator.toggleTrails();
         });
         
         // Herramientas
@@ -259,7 +254,7 @@ export class UI {
                     <h5 style="margin: 0 0 10px 0; color: #9C27B0; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Lunas (${planetInfo.moons.length})</h5>
                     <div class="info-grid">
                         ${planetInfo.moons.map(moon => `
-                            <div class="info-item">
+                            <div class="info-item moon-clickable" data-moon-name="${moon.name}" style="cursor: pointer; transition: background-color 0.2s;">
                                 <div class="info-label">${moon.name}</div>
                                 <div class="info-value">${moon.distance.toFixed(3)} AU${moon.eclipticInclination !== undefined ? ` (Incl. Eclíptica: ${moon.eclipticInclination.toFixed(1)}°)` : ''}</div>
                             </div>
@@ -271,6 +266,34 @@ export class UI {
         `;
         
         this.elements.planetInfo.innerHTML = html;
+        
+        // Agregar event listeners para las lunas clickeables
+        const moonElements = this.elements.planetInfo.querySelectorAll('.moon-clickable');
+        moonElements.forEach(moonElement => {
+            moonElement.addEventListener('click', (e) => {
+                const moonName = e.currentTarget.getAttribute('data-moon-name');
+                this.selectMoon(moonName);
+            });
+            
+            // Agregar efectos hover
+            moonElement.addEventListener('mouseenter', (e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(156, 39, 176, 0.2)';
+            });
+            
+            moonElement.addEventListener('mouseleave', (e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+            });
+        });
+    }
+    
+    selectMoon(moonName) {
+        if (!this.simulator.selectedPlanet) return;
+        
+        // Buscar la luna en el planeta seleccionado
+        const moon = this.simulator.selectedPlanet.moons.find(m => m.name === moonName);
+        if (moon) {
+            this.simulator.selectMoon(moon, this.simulator.selectedPlanet);
+        }
     }
     
     clearPlanetInfo() {
@@ -357,10 +380,7 @@ export class UI {
                 this.elements.showLabels.checked = !this.elements.showLabels.checked;
                 this.simulator.toggleLabels();
                 break;
-            case 'KeyT':
-                this.elements.showTrails.checked = !this.elements.showTrails.checked;
-                this.simulator.toggleTrails();
-                break;
+
             case 'KeyF':
                 if (this.simulator.selectedPlanet) {
                     this.simulator.followPlanet(this.simulator.selectedPlanet);
