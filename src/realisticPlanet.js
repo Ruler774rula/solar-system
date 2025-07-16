@@ -41,10 +41,18 @@ export class RealisticPlanet {
         this.orbitLine = null;
         this.label = null;
         this.trail = null;
+        this.selectionRing = null;
+        this.visualRing = null;
         
         // Estado
         this.isSelected = false;
+        this.isHovered = false;
         this.showOrbit = true;
+        this.uiVisible = true; // Por defecto la UI está visible
+        
+        // Animaciones
+        this.selectionRingAnimation = null;
+        this.hoverAnimation = null;
         this.showLabel = true;
         this.showTrail = false;
         
@@ -57,6 +65,7 @@ export class RealisticPlanet {
         this.createOrbit();
         this.createMoons();
         this.createLabel();
+        this.createSelectionRing();
     }
     
     calculateDisplaySize() {
@@ -446,6 +455,40 @@ export class RealisticPlanet {
         this.label.userData = { planet: this, type: 'label' };
     }
     
+    createSelectionRing() {
+        // Crear geometría del aro
+        this.baseRingRadius = this.size * 1.8; // 80% más grande que el planeta
+        
+        // Crear esfera invisible para detección de clics (hitbox)
+        const sphereGeometry = new THREE.SphereGeometry(this.baseRingRadius, 32, 16);
+        const sphereMaterial = new THREE.MeshBasicMaterial({
+            transparent: true,
+            opacity: 0,
+            visible: false
+        });
+        
+        this.selectionRing = new THREE.Mesh(sphereGeometry, sphereMaterial);
+        this.selectionRing.userData = { planet: this, type: 'selectionRing' };
+        
+        // Crear aro visual que apunta hacia la cámara
+        const ringGeometry = new THREE.RingGeometry(this.baseRingRadius * 0.9, this.baseRingRadius, 32);
+        const ringMaterial = new THREE.MeshBasicMaterial({
+            color: this.data.color,
+            transparent: true,
+            opacity: 0,
+            side: THREE.DoubleSide,
+            depthWrite: false,
+            depthTest: true
+        });
+        
+        this.visualRing = new THREE.Mesh(ringGeometry, ringMaterial);
+        this.visualRing.userData = { planet: this, type: 'visualRing' };
+        
+        // Añadir ambos al grupo del planeta
+        this.group.add(this.selectionRing);
+        this.group.add(this.visualRing);
+    }
+    
     createTrail() {
         if (this.trail) return;
         
@@ -533,9 +576,16 @@ export class RealisticPlanet {
             this.planetSphere.rotation.y += rotationSpeed * direction * this.orbitalMechanics.timeScale * 200000;
         }
         this.moons.forEach(moon => {
-            // Aplicar velocidad orbital realista sin factor adicional
-            // Invertir dirección orbital de las lunas (excepto las que ya tienen órbita retrógrada)
-            const moonDirection = moon.orbitalPeriod < 0 ? 1 : -1; // Si ya es retrógrada, mantener dirección
+
+                        // Aplicar velocidad orbital realista
+            // Si el período orbital es negativo, la luna orbita en dirección retrógrada
+            let moonDirection = moon.orbitalPeriod < 0 ? -1 : 1; // Negativo = retrógrada, positivo = prógrada
+            
+            // Invertir dirección orbital para todas las lunas excepto las de Neptuno y Urano
+            if (this.data.name !== 'Neptuno' && this.data.name !== 'Urano') {
+                moonDirection *= -1; // Invertir la dirección orbital
+            }
+
             moon.angle += moon.speed * deltaTime * this.orbitalMechanics.timeScale * moonDirection;
             moon.mesh.position.x = Math.cos(moon.angle) * moon.distance;
             moon.mesh.position.z = Math.sin(moon.angle) * moon.distance;
@@ -609,9 +659,27 @@ export class RealisticPlanet {
             }
         }
         
+        // Actualizar aro de selección con escalado según distancia de cámara
+        if (this.selectionRing && this.visualRing && camera) {
+            const distance = camera.position.distanceTo(this.group.position);
+            
+            // Hacer que el aro visual siempre apunte hacia la cámara (billboard effect)
+            if (this.visualRing.visible && this.visualRing.material.opacity > 0) {
+                this.visualRing.lookAt(camera.position);
+            }
+            
+            // Usar solo el escalado progresivo ultra suave
+            this.updateSelectionRingScale(camera);
+        }
+        
         // Actualizar trail
         if (this.showTrail) {
             this.updateTrail();
+        }
+        
+        // Actualizar tamaño de hitbox y aro según distancia de cámara
+        if (camera && this.selectionRing && this.visualRing) {
+            this.updateSelectionRingScale(camera);
         }
     }
     
@@ -624,6 +692,137 @@ export class RealisticPlanet {
             if (fresnelMesh && fresnelMesh.material.uniforms) {
                 fresnelMesh.material.uniforms.fresnelBias.value = selected ? 0.2 : 0.1;
                 fresnelMesh.material.uniforms.fresnelScale.value = selected ? 1.5 : 1.0;
+            }
+        }
+        
+        if (this.visualRing) {
+            if (selected) {
+                // Al seleccionar, primero ocultar el aro inmediatamente
+                this.visualRing.material.opacity = 0;
+                this.visualRing.visible = false;
+                
+                // Cancelar animaciones previas
+                if (this.selectionRingAnimation) {
+                    clearInterval(this.selectionRingAnimation);
+                    this.selectionRingAnimation = null;
+                }
+            } else {
+                // Ocultar el aro cuando se deselecciona
+                if (this.selectionRingAnimation) {
+                    clearInterval(this.selectionRingAnimation);
+                }
+                
+                const targetOpacity = this.isHovered ? 0.6 : 0;
+                const currentOpacity = this.visualRing.material.opacity;
+                const step = (targetOpacity - currentOpacity) / 10;
+                
+                this.selectionRingAnimation = setInterval(() => {
+                    const newOpacity = this.visualRing.material.opacity + step;
+                    
+                    if ((step > 0 && newOpacity >= targetOpacity) || (step < 0 && newOpacity <= targetOpacity)) {
+                        this.visualRing.material.opacity = targetOpacity;
+                        if (targetOpacity === 0) {
+                            this.visualRing.visible = false;
+                        }
+                        clearInterval(this.selectionRingAnimation);
+                        this.selectionRingAnimation = null;
+                    } else {
+                        this.visualRing.material.opacity = newOpacity;
+                    }
+                }, 16);
+            }
+        }
+    }
+    
+    // Método separado para el fade in del aro después de la selección
+    showSelectionRingWithFadeIn() {
+        if (this.visualRing && this.isSelected && this.uiVisible !== false) {
+            // Mostrar el aro y comenzar fade in
+            this.visualRing.visible = true;
+            this.visualRing.material.opacity = 0;
+            
+            // Cancelar animaciones previas
+            if (this.selectionRingAnimation) {
+                clearInterval(this.selectionRingAnimation);
+            }
+            
+            // Animar fade in
+            const targetOpacity = 0.2; // Reducido para mayor transparencia
+            const step = targetOpacity / 20; // 20 pasos para una animación más suave
+            
+            this.selectionRingAnimation = setInterval(() => {
+                const newOpacity = this.visualRing.material.opacity + step;
+                
+                if (newOpacity >= targetOpacity) {
+                    this.visualRing.material.opacity = targetOpacity;
+                    clearInterval(this.selectionRingAnimation);
+                    this.selectionRingAnimation = null;
+                } else {
+                    this.visualRing.material.opacity = newOpacity;
+                }
+            }, 16);
+        }
+    }
+    
+    setHovered(hovered) {
+        this.isHovered = hovered;
+        
+        // Solo mostrar hover si el planeta no está seleccionado y la UI está visible
+        if (this.visualRing && !this.isSelected && this.uiVisible !== false) {
+            // Cancelar animaciones previas de hover
+            if (this.hoverAnimation) {
+                clearInterval(this.hoverAnimation);
+            }
+            
+            const targetOpacity = hovered ? 0.5 : 0;
+            const currentOpacity = this.visualRing.material.opacity;
+            const step = (targetOpacity - currentOpacity) / 10;
+            
+            if (hovered) {
+                this.visualRing.visible = true;
+            }
+            
+            this.hoverAnimation = setInterval(() => {
+                const newOpacity = this.visualRing.material.opacity + step;
+                
+                if ((step > 0 && newOpacity >= targetOpacity) || (step < 0 && newOpacity <= targetOpacity)) {
+                    this.visualRing.material.opacity = targetOpacity;
+                    if (targetOpacity === 0) {
+                        this.visualRing.visible = false;
+                    }
+                    clearInterval(this.hoverAnimation);
+                    this.hoverAnimation = null;
+                } else {
+                    this.visualRing.material.opacity = newOpacity;
+                }
+            }, 16);
+        }
+    }
+    
+    // Método para controlar la visibilidad del aro de selección basado en el estado de la UI
+    setUIVisible(visible) {
+        this.uiVisible = visible;
+        
+        if (this.visualRing) {
+            if (!visible) {
+                // Ocultar el aro inmediatamente cuando se oculta la UI
+                if (this.selectionRingAnimation) {
+                    clearInterval(this.selectionRingAnimation);
+                    this.selectionRingAnimation = null;
+                }
+                if (this.hoverAnimation) {
+                    clearInterval(this.hoverAnimation);
+                    this.hoverAnimation = null;
+                }
+                this.visualRing.visible = false;
+                this.visualRing.material.opacity = 0;
+            } else {
+                // Restaurar el aro si el planeta está seleccionado o en hover
+                if (this.isSelected) {
+                    this.showSelectionRingWithFadeIn();
+                } else if (this.isHovered) {
+                    this.setHovered(true);
+                }
             }
         }
     }
@@ -650,6 +849,43 @@ export class RealisticPlanet {
         if (this.trail) {
             this.trail.visible = show;
         }
+    }
+    
+    updateSelectionRingScale(camera) {
+        // Calcular distancia de la cámara al planeta
+        const distance = camera.position.distanceTo(this.group.position);
+        
+        // Usar tamaños fijos uniformes para todos los planetas
+        const minRadius = this.baseRingRadius; // Tamaño mínimo (original del planeta)
+        const maxRadius = 1.0; // Tamaño máximo reducido para todos los planetas
+        const minDistance = 2.0; // Distancia mínima de zoom
+        const maxDistance = 300.0; // Distancia máxima muy aumentada para escalado ultra suave
+        
+        // Interpolación ultra suave con múltiples niveles de suavizado
+        const normalizedDistance = Math.max(0, Math.min(1, (distance - minDistance) / (maxDistance - minDistance)));
+        
+        // Aplicar múltiples funciones de suavizado para un escalado ultra progresivo
+        // 1. Función logarítmica base
+        const logScale = Math.log(1 + normalizedDistance * 19) / Math.log(20); // Escala más suave
+        
+        // 2. Aplicar función de easing cúbica para suavizar aún más
+        const easedScale = logScale * logScale * (3.0 - 2.0 * logScale); // Smoothstep
+        
+        // 3. Reducir exponente drásticamente para cambios casi imperceptibles
+        const finalScale = Math.pow(easedScale, 0.1); // Exponente ultra reducido
+        
+        const scaledRadius = minRadius + (maxRadius - minRadius) * finalScale;
+        
+        // Tanto la esfera de selección como el aro visual usan el mismo tamaño escalado
+        const finalRadius = scaledRadius;
+        
+        // Actualizar geometría de la esfera de selección
+        this.selectionRing.geometry.dispose();
+        this.selectionRing.geometry = new THREE.SphereGeometry(finalRadius, 32, 16);
+        
+        // Actualizar geometría del aro visual
+        this.visualRing.geometry.dispose();
+        this.visualRing.geometry = new THREE.RingGeometry(finalRadius * 0.9, finalRadius, 32);
     }
     
     getInfo(camera = null, controls = null) {

@@ -314,13 +314,22 @@ class RealisticSolarSystem {
         
         this.raycaster.setFromCamera(this.mouse, this.camera);
         
-        // Obtener todos los objetos intersectables
+        // Obtener todos los objetos intersectables con prioridad: primero planetas y lunas, luego aros
         const intersectableObjects = [];
+        
+        // Primero añadir meshes de planetas y lunas (mayor prioridad)
         this.planets.forEach(planet => {
             if (planet.mesh) intersectableObjects.push(planet.mesh);
             planet.moons.forEach(moon => {
                 if (moon.mesh) intersectableObjects.push(moon.mesh);
             });
+        });
+        
+        // Luego añadir aros de selección (menor prioridad) - solo si no están seleccionados
+        this.planets.forEach(planet => {
+            if (planet.selectionRing && !planet.isSelected) {
+                intersectableObjects.push(planet.selectionRing);
+            }
         });
         
         const intersects = this.raycaster.intersectObjects(intersectableObjects);
@@ -329,9 +338,15 @@ class RealisticSolarSystem {
             const intersectedObject = intersects[0].object;
             
             if (intersectedObject.userData.planet) {
-                this.selectPlanet(intersectedObject.userData.planet);
+                // Solo seleccionar si el planeta no está ya seleccionado
+                if (!intersectedObject.userData.planet.isSelected) {
+                    this.selectPlanet(intersectedObject.userData.planet);
+                }
             } else if (intersectedObject.userData.parent) {
-                this.selectPlanet(intersectedObject.userData.parent);
+                // Solo seleccionar si el planeta no está ya seleccionado
+                if (!intersectedObject.userData.parent.isSelected) {
+                    this.selectPlanet(intersectedObject.userData.parent);
+                }
             } else if (intersectedObject.userData.moon) {
                 // Clic directo en una luna
                 const moon = intersectedObject.userData.moon;
@@ -346,7 +361,53 @@ class RealisticSolarSystem {
     onMouseMove(event) {
         this.updateMousePosition(event);
         
-        // Aquí se podría añadir lógica para hover effects
+        this.raycaster.setFromCamera(this.mouse, this.camera);
+        
+        // Obtener todos los objetos intersectables incluyendo aros de selección
+        const intersectableObjects = [];
+        this.planets.forEach(planet => {
+            if (planet.mesh) intersectableObjects.push(planet.mesh);
+            // Solo incluir aro de selección si el planeta no está seleccionado
+            if (planet.selectionRing && !planet.isSelected) {
+                intersectableObjects.push(planet.selectionRing);
+            }
+            planet.moons.forEach(moon => {
+                if (moon.mesh) intersectableObjects.push(moon.mesh);
+            });
+        });
+        
+        const intersects = this.raycaster.intersectObjects(intersectableObjects);
+        
+        // Resetear hover de todos los planetas
+        this.planets.forEach(planet => {
+            planet.setHovered(false);
+        });
+        
+        // Aplicar hover al planeta intersectado
+        if (intersects.length > 0) {
+            const intersectedObject = intersects[0].object;
+            
+            if (intersectedObject.userData.planet) {
+                intersectedObject.userData.planet.setHovered(true);
+                this.renderer.domElement.style.cursor = 'pointer';
+            } else if (intersectedObject.userData.parent) {
+                intersectedObject.userData.parent.setHovered(true);
+                this.renderer.domElement.style.cursor = 'pointer';
+            } else if (intersectedObject.userData.type === 'planet') {
+                // Hover sobre el mesh del planeta directamente
+                const planet = intersectedObject.userData.planet || intersectedObject.parent?.userData?.planet;
+                if (planet) {
+                    planet.setHovered(true);
+                    this.renderer.domElement.style.cursor = 'pointer';
+                } else {
+                    this.renderer.domElement.style.cursor = 'default';
+                }
+            } else {
+                this.renderer.domElement.style.cursor = 'default';
+            }
+        } else {
+            this.renderer.domElement.style.cursor = 'default';
+        }
     }
     
     updateMousePosition(event) {
@@ -400,19 +461,12 @@ class RealisticSolarSystem {
         if (planet) {
             planet.setSelected(true);
             
-            // Ajustar distancia mínima de la cámara basada en el planeta específico
-            const planetDistances = {
-                'Mercurio': 0.139,
-                'Venus': 0.199,
-                'Tierra': 0.209,
-                'Marte': 0.154
-            };
+            // Hacer zoom automático al planeta seleccionado
+            this.followPlanet(planet);
             
-            const minDistance = planetDistances[planet.data.name] || Math.max(planet.size * 1.5, 0.5);
-            
-            this.controls.minDistance = minDistance;
-            
+            // Actualizar UI
             if (this.ui) {
+                this.ui.updateSelectedPlanet(planet);
                 this.ui.updatePlanetInfo(planet.getInfo(this.camera, this.controls));
             }
         } else {
@@ -522,6 +576,11 @@ class RealisticSolarSystem {
         if (this.ui) {
             this.ui.toggle(this.showUI);
         }
+        
+        // Controlar la visibilidad de los aros de selección de planetas
+        this.planets.forEach(planet => {
+            planet.setUIVisible(this.showUI);
+        });
     }
     
     selectMoon(moon, parentPlanet) {
@@ -723,6 +782,13 @@ class RealisticSolarSystem {
                     requestAnimationFrame(fadeIn);
                 }
             });
+        }
+        
+        // Fade in del aro del planeta seleccionado después de un pequeño delay
+        if (this.selectedPlanet) {
+            setTimeout(() => {
+                this.selectedPlanet.showSelectionRingWithFadeIn();
+            }, 300); // Delay de 300ms para que ocurra después de mostrar la info
         }
     }
     
