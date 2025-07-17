@@ -9,6 +9,7 @@ export class UI {
         this.elements = {};
         this.isInitialized = false;
         this.isVisible = true;
+        this.isMobile = false;
         
         // Esperar a que el DOM esté listo
         if (document.readyState === 'loading') {
@@ -20,12 +21,55 @@ export class UI {
     
     init() {
         this.getElements();
+        this.checkDeviceType();
         this.setupEventListeners();
         this.updatePlanetList();
         this.setDefaultValues();
         this.initCustomScrollBehavior();
+        this.setupResponsiveLayout();
         this.hideLoading();
         this.isInitialized = true;
+    }
+    
+    checkDeviceType() {
+        // Detectar si es un dispositivo móvil basado en el ancho de la pantalla
+        this.isMobile = window.innerWidth <= 768;
+        document.body.classList.toggle('mobile-device', this.isMobile);
+    }
+    
+    setupResponsiveLayout() {
+        // Configurar el layout inicial basado en el tipo de dispositivo
+        this.adjustLayoutForScreenSize();
+        
+        // Añadir listener para el redimensionamiento de la ventana
+        window.addEventListener('resize', () => {
+            this.checkDeviceType();
+            this.adjustLayoutForScreenSize();
+            this.checkScrollIndicators();
+        });
+        
+        // Añadir listener para cambios de orientación en dispositivos móviles
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => {
+                this.checkDeviceType();
+                this.adjustLayoutForScreenSize();
+                this.checkScrollIndicators();
+            }, 200); // Pequeño retraso para asegurar que los cambios de orientación se completen
+        });
+    }
+    
+    adjustLayoutForScreenSize() {
+        if (this.isMobile) {
+            // Ajustes específicos para móviles
+            if (this.elements.uiContainer) {
+                this.elements.uiContainer.classList.add('mobile-layout');
+            }
+        } else {
+            // Ajustes para escritorio
+            if (this.elements.uiContainer) {
+                this.elements.uiContainer.classList.remove('mobile-layout');
+            }
+        }
     }
     
     setDefaultValues() {
@@ -60,7 +104,24 @@ export class UI {
     }
     
     setupEventListeners() {
-        // Controles de simulación
+        // Controles de simulación con soporte para eventos táctiles
+        const addTouchFeedback = (element) => {
+            if (!element) return;
+            
+            // Añadir feedback visual para eventos táctiles
+            element.addEventListener('touchstart', function() {
+                this.classList.add('touch-active');
+            }, { passive: true });
+            
+            element.addEventListener('touchend', function() {
+                this.classList.remove('touch-active');
+            }, { passive: true });
+        };
+        
+        // Aplicar feedback táctil a todos los botones
+        const buttons = document.querySelectorAll('.ui-button');
+        buttons.forEach(button => addTouchFeedback(button));
+        
         this.elements.pauseBtn.addEventListener('click', () => {
             this.simulator.togglePause();
         });
@@ -130,9 +191,29 @@ export class UI {
             const planetItem = document.createElement('div');
             planetItem.className = 'planet-item';
             planetItem.textContent = planet.data.name;
+            
+            // Añadir eventos para escritorio y móvil
             planetItem.addEventListener('click', () => {
                 this.selectPlanet(planet);
             });
+            
+            // Añadir eventos táctiles específicos para móviles
+            if (this.isMobile) {
+                planetItem.addEventListener('touchstart', function() {
+                    this.classList.add('touch-active');
+                }, { passive: true });
+                
+                planetItem.addEventListener('touchend', function() {
+                    this.classList.remove('touch-active');
+                    // No necesitamos llamar a selectPlanet aquí porque el evento click se disparará automáticamente
+                }, { passive: true });
+                
+                // Añadir indicador visual para dispositivos táctiles
+                const touchIndicator = document.createElement('span');
+                touchIndicator.className = 'touch-indicator';
+                touchIndicator.innerHTML = '&#10148;'; // Flecha pequeña
+                planetItem.appendChild(touchIndicator);
+            }
             
             this.elements.planetItems.appendChild(planetItem);
         });
@@ -169,9 +250,18 @@ export class UI {
     updatePlanetInfo(planetInfo) {
         if (!this.elements.planetInfo || !planetInfo) return;
         
+        // Ajustar el diseño según el tipo de dispositivo
+        const titleStyle = this.isMobile ? 
+            "position: relative; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.2); margin-bottom: 10px; text-align: center;" :
+            "position: relative; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.2); margin-bottom: 15px;";
+            
+        const titleTextStyle = this.isMobile ?
+            "margin: 0; font-size: 18px;" :
+            "margin: 0; padding-right: 30px;";
+        
         const html = `
-            <div style="position: relative; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.2); margin-bottom: 15px;">
-                <h4 style="margin: 0; padding-right: 30px;">${planetInfo.name}</h4>
+            <div style="${titleStyle}">
+                <h4 style="${titleTextStyle}">${planetInfo.name}</h4>
             </div>
             
             <div class="ui-section" style="margin-bottom: 20px;">
@@ -434,7 +524,13 @@ export class UI {
         if (show) {
             // Mostrar UI
             if (this.elements.uiContainer) {
-                this.elements.uiContainer.style.display = 'block';
+                this.elements.uiContainer.style.display = this.isMobile ? 'flex' : 'block';
+                
+                // Reajustar el layout después de mostrar la UI
+                if (this.isMobile) {
+                    this.adjustLayoutForScreenSize();
+                    this.checkScrollIndicators();
+                }
             }
             // Ocultar botón de mostrar UI
             this.hideShowUIButton();
@@ -455,35 +551,74 @@ export class UI {
         const button = document.createElement('button');
         button.id = 'show-ui-btn';
         button.innerHTML = '☰';
-        button.style.cssText = `
+        
+        // Estilos base para el botón
+        let buttonStyles = `
             position: fixed;
-            top: 20px;
-            left: 20px;
-            width: 40px;
-            height: 40px;
             background: rgba(0, 0, 0, 0.8);
             color: white;
             border: 1px solid rgba(255, 255, 255, 0.3);
             border-radius: 5px;
-            font-size: 18px;
             cursor: pointer;
             z-index: 10000;
             transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
         `;
         
-        button.addEventListener('mouseenter', () => {
-            button.style.background = 'rgba(76, 175, 80, 0.8)';
-            button.style.transform = 'scale(1.1)';
-        });
+        // Ajustar estilos según el tipo de dispositivo
+        if (this.isMobile) {
+            buttonStyles += `
+                top: 10px;
+                left: 10px;
+                width: 50px;
+                height: 50px;
+                font-size: 24px;
+                padding: 0;
+                border-radius: 50%;
+                background: rgba(76, 175, 80, 0.9);
+                border: 2px solid rgba(255, 255, 255, 0.5);
+            `;
+        } else {
+            buttonStyles += `
+                top: 20px;
+                left: 20px;
+                width: 40px;
+                height: 40px;
+                font-size: 18px;
+                border-radius: 5px;
+            `;
+        }
         
-        button.addEventListener('mouseleave', () => {
-            button.style.background = 'rgba(0, 0, 0, 0.8)';
-            button.style.transform = 'scale(1)';
-        });
+        button.style.cssText = buttonStyles;
         
+        // Eventos para escritorio
+        if (!this.isMobile) {
+            button.addEventListener('mouseenter', () => {
+                button.style.background = 'rgba(76, 175, 80, 0.8)';
+                button.style.transform = 'scale(1.1)';
+            });
+            
+            button.addEventListener('mouseleave', () => {
+                button.style.background = 'rgba(0, 0, 0, 0.8)';
+                button.style.transform = 'scale(1)';
+            });
+        }
+        
+        // Evento de clic para todos los dispositivos
         button.addEventListener('click', () => {
             this.simulator.toggleUI();
         });
+        
+        // Añadir evento de toque para dispositivos móviles
+        if (this.isMobile) {
+            button.addEventListener('touchstart', () => {
+                button.style.transform = 'scale(1.1)';
+            });
+            
+            button.addEventListener('touchend', () => {
+                button.style.transform = 'scale(1)';
+            });
+        }
         
         document.body.appendChild(button);
     }
@@ -504,8 +639,36 @@ export class UI {
             
             if (hasVerticalScroll) {
                 infoPanel.classList.add('has-scroll');
+                
+                // Añadir indicadores de scroll específicos para móviles
+                if (this.isMobile && !infoPanel.querySelector('.mobile-scroll-indicator')) {
+                    const scrollIndicator = document.createElement('div');
+                    scrollIndicator.className = 'mobile-scroll-indicator';
+                    scrollIndicator.innerHTML = '<span>&#8595;</span>'; // Flecha hacia abajo
+                    infoPanel.appendChild(scrollIndicator);
+                    
+                    // Ocultar el indicador cuando se hace scroll
+                    infoPanel.addEventListener('scroll', () => {
+                        const scrollTop = infoPanel.scrollTop;
+                        const scrollHeight = infoPanel.scrollHeight;
+                        const clientHeight = infoPanel.clientHeight;
+                        
+                        // Si estamos cerca del final, ocultar el indicador
+                        if (scrollTop + clientHeight > scrollHeight - 50) {
+                            scrollIndicator.style.opacity = '0';
+                        } else {
+                            scrollIndicator.style.opacity = '1';
+                        }
+                    }, { passive: true });
+                }
             } else {
                 infoPanel.classList.remove('has-scroll');
+                
+                // Eliminar indicador si existe y no es necesario
+                const indicator = infoPanel.querySelector('.mobile-scroll-indicator');
+                if (indicator) {
+                    indicator.remove();
+                }
             }
         }
         
@@ -516,8 +679,36 @@ export class UI {
             
             if (hasVerticalScroll) {
                 planetList.classList.add('has-scroll');
+                
+                // Añadir indicadores de scroll específicos para móviles
+                if (this.isMobile && !planetList.querySelector('.mobile-scroll-indicator')) {
+                    const scrollIndicator = document.createElement('div');
+                    scrollIndicator.className = 'mobile-scroll-indicator';
+                    scrollIndicator.innerHTML = '<span>&#8595;</span>'; // Flecha hacia abajo
+                    planetList.appendChild(scrollIndicator);
+                    
+                    // Ocultar el indicador cuando se hace scroll
+                    planetList.addEventListener('scroll', () => {
+                        const scrollTop = planetList.scrollTop;
+                        const scrollHeight = planetList.scrollHeight;
+                        const clientHeight = planetList.clientHeight;
+                        
+                        // Si estamos cerca del final, ocultar el indicador
+                        if (scrollTop + clientHeight > scrollHeight - 50) {
+                            scrollIndicator.style.opacity = '0';
+                        } else {
+                            scrollIndicator.style.opacity = '1';
+                        }
+                    }, { passive: true });
+                }
             } else {
                 planetList.classList.remove('has-scroll');
+                
+                // Eliminar indicador si existe y no es necesario
+                const indicator = planetList.querySelector('.mobile-scroll-indicator');
+                if (indicator) {
+                    indicator.remove();
+                }
             }
         }
     }

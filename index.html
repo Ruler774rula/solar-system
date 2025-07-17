@@ -9,6 +9,7 @@
         margin: 0;
         padding: 0;
         box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
       }
       
       body {
@@ -16,6 +17,21 @@
         background: #000;
         color: #fff;
         overflow: hidden;
+        touch-action: manipulation;
+      }
+      
+      /* Clase para dispositivos móviles */
+      body.mobile-device {
+        overflow-y: auto;
+        overflow-x: hidden;
+      }
+      
+      /* Ajustes para la UI en modo móvil */
+      .mobile-layout {
+        display: flex !important;
+        flex-direction: column !important;
+        height: 100% !important;
+        overflow-y: auto !important;
       }
       
       canvas {
@@ -163,6 +179,44 @@
         opacity: 1;
       }
       
+      /* Indicador de scroll para dispositivos móviles */
+      .mobile-scroll-indicator {
+        position: absolute;
+        bottom: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(76, 175, 80, 0.7);
+        color: white;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+        pointer-events: none;
+        animation: bounce 1.5s infinite;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        opacity: 1;
+        transition: opacity 0.3s ease;
+      }
+      
+      .mobile-scroll-indicator span {
+        font-size: 16px;
+      }
+      
+      @keyframes bounce {
+        0%, 20%, 50%, 80%, 100% {
+          transform: translateX(-50%) translateY(0);
+        }
+        40% {
+          transform: translateX(-50%) translateY(-8px);
+        }
+        60% {
+          transform: translateX(-50%) translateY(-4px);
+        }
+      }
+      
       .planet-list {
         position: absolute;
         bottom: 20px;
@@ -229,15 +283,21 @@
         left: 100%;
       }
       
-      .ui-button:active {
+      .ui-button:active, .ui-button.touch-active {
         transform: translateY(0);
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        background: rgba(76, 175, 80, 0.6);
       }
       
       .ui-button.active {
         background: #4CAF50;
         color: #000;
         box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+      }
+      
+      /* Estilos específicos para interacción táctil */
+      .touch-active {
+        transition: all 0.1s ease !important;
       }
       
       .ui-slider {
@@ -285,6 +345,27 @@
         background: rgba(76, 175, 80, 0.3);
         border-color: #4CAF50;
         box-shadow: 0 0 10px rgba(76, 175, 80, 0.4);
+      }
+      
+      /* Estilos para el indicador táctil */
+      .touch-indicator {
+        display: inline-block;
+        margin-left: 8px;
+        font-size: 10px;
+        opacity: 0.7;
+        transition: all 0.3s ease;
+      }
+      
+      .planet-item:hover .touch-indicator,
+      .planet-item.touch-active .touch-indicator {
+        opacity: 1;
+        transform: translateX(3px);
+      }
+      
+      /* Ajustes específicos para dispositivos táctiles */
+      .planet-item.touch-active {
+        background: rgba(76, 175, 80, 0.2);
+        transform: translateX(5px);
       }
       
       .info-grid {
@@ -372,16 +453,92 @@
       
       /* Responsive */
       @media (max-width: 768px) {
+        .ui-container {
+          display: flex;
+          flex-direction: column;
+          height: 100%;
+          overflow-y: auto;
+          padding-bottom: 60px; /* Espacio para la barra de estado */
+        }
+        
         .controls-panel,
         .info-panel,
         .planet-list {
-          width: calc(100% - 40px);
           position: relative;
+          width: calc(100% - 20px);
           margin: 10px;
+          max-height: none;
+          left: 0;
+          right: 0;
+          top: 0;
+          bottom: auto;
+        }
+        
+        .controls-panel {
+          order: 1;
         }
         
         .info-panel {
+          order: 2;
           max-height: 300px;
+          overflow-y: auto;
+        }
+        
+        .planet-list {
+          order: 3;
+          max-height: 150px;
+        }
+        
+        .status-bar {
+          position: fixed;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          width: 100%;
+          padding: 5px;
+          background: rgba(0, 0, 0, 0.8);
+          z-index: 1001;
+          display: flex;
+          justify-content: center;
+        }
+        
+        .status-bar .ui-panel {
+          width: 100%;
+          margin: 0;
+          padding: 5px 10px;
+          text-align: center;
+        }
+        
+        /* Ajustes para botones en móvil */
+        .ui-button {
+          padding: 10px 16px;
+          margin: 5px 2px;
+          font-size: 14px;
+        }
+        
+        /* Ajustes para la cuadrícula de información */
+        .info-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      
+      /* Ajustes específicos para dispositivos muy pequeños */
+      @media (max-width: 480px) {
+        .ui-section h3 {
+          font-size: 12px;
+        }
+        
+        .info-label {
+          font-size: 10px;
+        }
+        
+        .info-value {
+          font-size: 12px;
+        }
+        
+        /* Ocultar instrucciones de teclado en móviles */
+        .keyboard-instructions {
+          display: none;
         }
       }
     </style>
@@ -467,7 +624,7 @@
     </div>
     
     <!-- Instrucciones de teclado -->
-    <div style="position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); font-size: 11px; color: #666; text-align: center; pointer-events: none;">
+    <div class="keyboard-instructions" style="position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); font-size: 11px; color: #666; text-align: center; pointer-events: none;">
       ESPACIO: Pausar | R: Resetear Cámara | O: Órbitas | L: Etiquetas | H: Ocultar UI | F: Seguir | ESC: Dejar de seguir
     </div>
     
