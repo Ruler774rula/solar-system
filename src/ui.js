@@ -45,7 +45,6 @@ export class UI {
         window.addEventListener('resize', () => {
             this.checkDeviceType();
             this.adjustLayoutForScreenSize();
-            this.checkScrollIndicators();
         });
         
         // Añadir listener para cambios de orientación en dispositivos móviles
@@ -53,7 +52,6 @@ export class UI {
             setTimeout(() => {
                 this.checkDeviceType();
                 this.adjustLayoutForScreenSize();
-                this.checkScrollIndicators();
             }, 200); // Pequeño retraso para asegurar que los cambios de orientación se completen
         });
     }
@@ -524,12 +522,16 @@ export class UI {
         if (show) {
             // Mostrar UI
             if (this.elements.uiContainer) {
-                this.elements.uiContainer.style.display = this.isMobile ? 'flex' : 'block';
+                if (this.isMobile) {
+                    this.elements.uiContainer.style.display = 'flex';
+                    this.elements.uiContainer.classList.remove('mobile-hidden');
+                } else {
+                    this.elements.uiContainer.style.display = 'block';
+                }
                 
                 // Reajustar el layout después de mostrar la UI
                 if (this.isMobile) {
                     this.adjustLayoutForScreenSize();
-                    this.checkScrollIndicators();
                 }
             }
             // Ocultar botón de mostrar UI
@@ -537,7 +539,11 @@ export class UI {
         } else {
             // Ocultar UI
             if (this.elements.uiContainer) {
-                this.elements.uiContainer.style.display = 'none';
+                if (this.isMobile) {
+                    this.elements.uiContainer.classList.add('mobile-hidden');
+                } else {
+                    this.elements.uiContainer.style.display = 'none';
+                }
             }
             // Mostrar botón de mostrar UI
             this.createShowUIButton();
@@ -555,37 +561,37 @@ export class UI {
         // Estilos base para el botón
         let buttonStyles = `
             position: fixed;
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 5px;
+            background: rgba(0, 0, 0, 0.3);
+            color: #4CAF50;
+            border: 2px solid #4CAF50;
+            border-radius: 50%;
             cursor: pointer;
-            z-index: 10000;
+            z-index: 10001;
             transition: all 0.3s ease;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
         `;
         
         // Ajustar estilos según el tipo de dispositivo
         if (this.isMobile) {
             buttonStyles += `
-                top: 10px;
-                left: 10px;
-                width: 50px;
-                height: 50px;
+                top: 15px;
+                left: 15px;
+                width: 56px;
+                height: 56px;
                 font-size: 24px;
-                padding: 0;
-                border-radius: 50%;
-                background: rgba(76, 175, 80, 0.9);
-                border: 2px solid rgba(255, 255, 255, 0.5);
             `;
         } else {
             buttonStyles += `
                 top: 20px;
                 left: 20px;
-                width: 40px;
-                height: 40px;
+                width: 44px;
+                height: 44px;
                 font-size: 18px;
-                border-radius: 5px;
             `;
         }
         
@@ -594,12 +600,16 @@ export class UI {
         // Eventos para escritorio
         if (!this.isMobile) {
             button.addEventListener('mouseenter', () => {
-                button.style.background = 'rgba(76, 175, 80, 0.8)';
+                button.style.background = 'rgba(76, 175, 80, 0.2)';
+                button.style.borderColor = '#66BB6A';
+                button.style.color = '#66BB6A';
                 button.style.transform = 'scale(1.1)';
             });
             
             button.addEventListener('mouseleave', () => {
-                button.style.background = 'rgba(0, 0, 0, 0.8)';
+                button.style.background = 'rgba(0, 0, 0, 0.3)';
+                button.style.borderColor = '#4CAF50';
+                button.style.color = '#4CAF50';
                 button.style.transform = 'scale(1)';
             });
         }
@@ -613,11 +623,17 @@ export class UI {
         if (this.isMobile) {
             button.addEventListener('touchstart', () => {
                 button.style.transform = 'scale(1.1)';
-            });
+                button.style.background = 'rgba(76, 175, 80, 0.2)';
+                button.style.borderColor = '#66BB6A';
+                button.style.color = '#66BB6A';
+            }, { passive: true });
             
             button.addEventListener('touchend', () => {
                 button.style.transform = 'scale(1)';
-            });
+                button.style.background = 'rgba(0, 0, 0, 0.3)';
+                button.style.borderColor = '#4CAF50';
+                button.style.color = '#4CAF50';
+            }, { passive: true });
         }
         
         document.body.appendChild(button);
@@ -630,85 +646,29 @@ export class UI {
         }
     }
     
-    // Método para verificar si los elementos necesitan scroll y mostrar indicadores
+    // Método para verificar si los elementos necesitan scroll - SIMPLIFICADO
     checkScrollIndicators() {
-        // Verificar panel de información
+        // Método simplificado sin indicadores de flecha
+        // Solo verifica si hay scroll disponible para efectos de estilo básicos
         if (this.elements.planetInfo && this.elements.planetInfo.parentElement) {
             const infoPanel = this.elements.planetInfo.parentElement;
             const hasVerticalScroll = infoPanel.scrollHeight > infoPanel.clientHeight;
             
             if (hasVerticalScroll) {
                 infoPanel.classList.add('has-scroll');
-                
-                // Añadir indicadores de scroll específicos para móviles
-                if (this.isMobile && !infoPanel.querySelector('.mobile-scroll-indicator')) {
-                    const scrollIndicator = document.createElement('div');
-                    scrollIndicator.className = 'mobile-scroll-indicator';
-                    scrollIndicator.innerHTML = '<span>&#8595;</span>'; // Flecha hacia abajo
-                    infoPanel.appendChild(scrollIndicator);
-                    
-                    // Ocultar el indicador cuando se hace scroll
-                    infoPanel.addEventListener('scroll', () => {
-                        const scrollTop = infoPanel.scrollTop;
-                        const scrollHeight = infoPanel.scrollHeight;
-                        const clientHeight = infoPanel.clientHeight;
-                        
-                        // Si estamos cerca del final, ocultar el indicador
-                        if (scrollTop + clientHeight > scrollHeight - 50) {
-                            scrollIndicator.style.opacity = '0';
-                        } else {
-                            scrollIndicator.style.opacity = '1';
-                        }
-                    }, { passive: true });
-                }
             } else {
                 infoPanel.classList.remove('has-scroll');
-                
-                // Eliminar indicador si existe y no es necesario
-                const indicator = infoPanel.querySelector('.mobile-scroll-indicator');
-                if (indicator) {
-                    indicator.remove();
-                }
             }
         }
         
-        // Verificar lista de planetas
         if (this.elements.planetItems && this.elements.planetItems.parentElement) {
             const planetList = this.elements.planetItems.parentElement.parentElement;
             const hasVerticalScroll = planetList.scrollHeight > planetList.clientHeight;
             
             if (hasVerticalScroll) {
                 planetList.classList.add('has-scroll');
-                
-                // Añadir indicadores de scroll específicos para móviles
-                if (this.isMobile && !planetList.querySelector('.mobile-scroll-indicator')) {
-                    const scrollIndicator = document.createElement('div');
-                    scrollIndicator.className = 'mobile-scroll-indicator';
-                    scrollIndicator.innerHTML = '<span>&#8595;</span>'; // Flecha hacia abajo
-                    planetList.appendChild(scrollIndicator);
-                    
-                    // Ocultar el indicador cuando se hace scroll
-                    planetList.addEventListener('scroll', () => {
-                        const scrollTop = planetList.scrollTop;
-                        const scrollHeight = planetList.scrollHeight;
-                        const clientHeight = planetList.clientHeight;
-                        
-                        // Si estamos cerca del final, ocultar el indicador
-                        if (scrollTop + clientHeight > scrollHeight - 50) {
-                            scrollIndicator.style.opacity = '0';
-                        } else {
-                            scrollIndicator.style.opacity = '1';
-                        }
-                    }, { passive: true });
-                }
             } else {
                 planetList.classList.remove('has-scroll');
-                
-                // Eliminar indicador si existe y no es necesario
-                const indicator = planetList.querySelector('.mobile-scroll-indicator');
-                if (indicator) {
-                    indicator.remove();
-                }
             }
         }
     }

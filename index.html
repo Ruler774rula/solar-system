@@ -76,19 +76,25 @@
       
       /* Estilos personalizados para barras de scroll */
       .info-panel::-webkit-scrollbar,
-      .planet-list::-webkit-scrollbar {
+      .planet-list::-webkit-scrollbar,
+      .controls-panel::-webkit-scrollbar,
+      .ui-section::-webkit-scrollbar {
         width: 8px;
       }
       
       .info-panel::-webkit-scrollbar-track,
-      .planet-list::-webkit-scrollbar-track {
+      .planet-list::-webkit-scrollbar-track,
+      .controls-panel::-webkit-scrollbar-track,
+      .ui-section::-webkit-scrollbar-track {
         background: rgba(255, 255, 255, 0.05);
         border-radius: 4px;
         margin: 4px;
       }
       
       .info-panel::-webkit-scrollbar-thumb,
-      .planet-list::-webkit-scrollbar-thumb {
+      .planet-list::-webkit-scrollbar-thumb,
+      .controls-panel::-webkit-scrollbar-thumb,
+      .ui-section::-webkit-scrollbar-thumb {
         background: linear-gradient(180deg, #4CAF50, #2E7D32);
         border-radius: 4px;
         border: 1px solid rgba(255, 255, 255, 0.1);
@@ -96,126 +102,70 @@
       }
       
       .info-panel::-webkit-scrollbar-thumb:hover,
-      .planet-list::-webkit-scrollbar-thumb:hover {
+      .planet-list::-webkit-scrollbar-thumb:hover,
+      .controls-panel::-webkit-scrollbar-thumb:hover,
+      .ui-section::-webkit-scrollbar-thumb:hover {
         background: linear-gradient(180deg, #66BB6A, #4CAF50);
         box-shadow: 0 2px 8px rgba(76, 175, 80, 0.4);
       }
       
       .info-panel::-webkit-scrollbar-thumb:active,
-      .planet-list::-webkit-scrollbar-thumb:active {
+      .planet-list::-webkit-scrollbar-thumb:active,
+      .controls-panel::-webkit-scrollbar-thumb:active,
+      .ui-section::-webkit-scrollbar-thumb:active {
         background: linear-gradient(180deg, #81C784, #66BB6A);
       }
       
       .info-panel::-webkit-scrollbar-corner,
-      .planet-list::-webkit-scrollbar-corner {
+      .planet-list::-webkit-scrollbar-corner,
+      .controls-panel::-webkit-scrollbar-corner,
+      .ui-section::-webkit-scrollbar-corner {
         background: rgba(255, 255, 255, 0.05);
       }
       
       /* Estilos para Firefox */
       .info-panel,
-      .planet-list {
+      .planet-list,
+      .controls-panel,
+      .ui-section {
         scrollbar-width: thin;
         scrollbar-color: #4CAF50 rgba(255, 255, 255, 0.05);
       }
       
       /* Efectos de transición suaves para el scroll */
       .info-panel,
-      .planet-list {
+      .planet-list,
+      .controls-panel,
+      .ui-section {
         scroll-behavior: smooth;
       }
       
       /* Estilos adicionales para elementos con scroll dentro del panel de información */
-      .info-panel .info-grid::-webkit-scrollbar {
+      .info-panel .info-grid::-webkit-scrollbar,
+      .controls-panel .ui-section::-webkit-scrollbar {
         width: 6px;
       }
       
-      .info-panel .info-grid::-webkit-scrollbar-track {
+      .info-panel .info-grid::-webkit-scrollbar-track,
+      .controls-panel .ui-section::-webkit-scrollbar-track {
         background: rgba(255, 255, 255, 0.03);
         border-radius: 3px;
       }
       
-      .info-panel .info-grid::-webkit-scrollbar-thumb {
+      .info-panel .info-grid::-webkit-scrollbar-thumb,
+      .controls-panel .ui-section::-webkit-scrollbar-thumb {
         background: linear-gradient(180deg, #4CAF50, #2E7D32);
         border-radius: 3px;
         border: 1px solid rgba(255, 255, 255, 0.05);
       }
       
-      .info-panel .info-grid::-webkit-scrollbar-thumb:hover {
+      .info-panel .info-grid::-webkit-scrollbar-thumb:hover,
+      .controls-panel .ui-section::-webkit-scrollbar-thumb:hover {
         background: linear-gradient(180deg, #66BB6A, #4CAF50);
       }
       
-      /* Indicador visual cuando hay contenido para hacer scroll */
-      .planet-list::after {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 20px;
-        background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
-        pointer-events: none;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-      }
-      
-      .planet-list.has-scroll::after {
-        opacity: 1;
-      }
-      
-      .info-panel::after {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 20px;
-        background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
-        pointer-events: none;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-      }
-      
-      .info-panel.has-scroll::after {
-        opacity: 1;
-      }
-      
-      /* Indicador de scroll para dispositivos móviles */
-      .mobile-scroll-indicator {
-        position: absolute;
-        bottom: 10px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: rgba(76, 175, 80, 0.7);
-        color: white;
-        width: 30px;
-        height: 30px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 100;
-        pointer-events: none;
-        animation: bounce 1.5s infinite;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-        opacity: 1;
-        transition: opacity 0.3s ease;
-      }
-      
-      .mobile-scroll-indicator span {
-        font-size: 16px;
-      }
-      
-      @keyframes bounce {
-        0%, 20%, 50%, 80%, 100% {
-          transform: translateX(-50%) translateY(0);
-        }
-        40% {
-          transform: translateX(-50%) translateY(-8px);
-        }
-        60% {
-          transform: translateX(-50%) translateY(-4px);
-        }
-      }
+      /* Indicador visual cuando hay contenido para hacer scroll - ELIMINADO */
+      /* Se eliminaron las flechas de animación y indicadores de scroll */
       
       .planet-list {
         position: absolute;
@@ -454,11 +404,16 @@
       /* Responsive */
       @media (max-width: 768px) {
         .ui-container {
-          display: flex;
+          display: flex !important;
           flex-direction: column;
-          height: 100%;
+          height: 100vh;
           overflow-y: auto;
           padding-bottom: 60px; /* Espacio para la barra de estado */
+        }
+        
+        /* Cuando la UI está oculta en móvil, asegurar que se oculte completamente */
+        .ui-container.mobile-hidden {
+          display: none !important;
         }
         
         .controls-panel,
@@ -496,10 +451,12 @@
           right: 0;
           width: 100%;
           padding: 5px;
-          background: rgba(0, 0, 0, 0.8);
+          background: rgba(0, 0, 0, 0.9);
+          backdrop-filter: blur(10px);
           z-index: 1001;
           display: flex;
           justify-content: center;
+          border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
         
         .status-bar .ui-panel {
@@ -507,18 +464,37 @@
           margin: 0;
           padding: 5px 10px;
           text-align: center;
+          background: transparent;
+          border: none;
         }
         
         /* Ajustes para botones en móvil */
         .ui-button {
-          padding: 10px 16px;
+          padding: 12px 16px;
           margin: 5px 2px;
           font-size: 14px;
+          min-height: 44px; /* Tamaño mínimo recomendado para touch */
         }
         
         /* Ajustes para la cuadrícula de información */
         .info-grid {
           grid-template-columns: 1fr;
+        }
+        
+        /* Mejorar el botón de mostrar UI en móvil */
+        #show-ui-btn {
+          position: fixed !important;
+          top: 15px !important;
+          right: 15px !important;
+          left: auto !important;
+          width: 56px !important;
+          height: 56px !important;
+          border-radius: 50% !important;
+          background: rgba(76, 175, 80, 0.95) !important;
+          border: 2px solid rgba(255, 255, 255, 0.8) !important;
+          font-size: 24px !important;
+          z-index: 10001 !important;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
         }
       }
       
@@ -539,6 +515,67 @@
         /* Ocultar instrucciones de teclado en móviles */
         .keyboard-instructions {
           display: none;
+        }
+      }
+      
+      /* Ajustes específicos para orientación vertical en móviles */
+      @media (max-width: 768px) and (orientation: portrait) {
+        .ui-container {
+          height: 100vh !important;
+          max-height: 100vh !important;
+        }
+        
+        .controls-panel {
+          max-height: 200px;
+          overflow-y: auto;
+        }
+        
+        .info-panel {
+          max-height: 250px;
+          overflow-y: auto;
+        }
+        
+        .planet-list {
+          max-height: 120px;
+          overflow-y: auto;
+        }
+        
+        /* Botón de mostrar UI en la izquierda para móvil vertical */
+        #show-ui-btn {
+          position: fixed !important;
+          top: 15px !important;
+          left: 15px !important;
+          right: auto !important;
+          z-index: 10002 !important;
+          background: rgba(0, 0, 0, 0.3) !important;
+          border: 2px solid #4CAF50 !important;
+          color: #4CAF50 !important;
+          backdrop-filter: blur(10px) !important;
+        }
+      }
+      
+      /* Ajustes para orientación horizontal en móviles */
+      @media (max-width: 768px) and (orientation: landscape) {
+        .ui-container {
+          flex-direction: row !important;
+          flex-wrap: wrap !important;
+          padding-bottom: 40px;
+        }
+        
+        .controls-panel,
+        .info-panel {
+          width: calc(50% - 15px) !important;
+          max-height: calc(100vh - 80px);
+        }
+        
+        .planet-list {
+          width: calc(100% - 20px) !important;
+          max-height: 100px;
+          order: 4;
+        }
+        
+        .status-bar {
+          height: 40px;
         }
       }
     </style>
