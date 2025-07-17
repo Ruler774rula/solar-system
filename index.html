@@ -25,19 +25,11 @@
         overflow-y: auto;
         overflow-x: hidden;
       }
-      
-      /* Ajustes para la UI en modo móvil */
-      .mobile-layout {
-        display: flex !important;
-        flex-direction: column !important;
-        height: 100% !important;
-        overflow-y: auto !important;
-      }
-      
+
       canvas {
         display: block;
       }
-      
+
       /* Estilos para la UI */
       .ui-container {
         position: fixed;
@@ -47,8 +39,11 @@
         height: 100%;
         pointer-events: none;
         z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
       }
-      
+
       .ui-panel {
         pointer-events: auto;
         background: rgba(0, 0, 0, 0.8);
@@ -56,22 +51,46 @@
         border-radius: 8px;
         padding: 15px;
         backdrop-filter: blur(10px);
+        margin: 10px;
       }
-      
+
       .controls-panel {
-        position: absolute;
-        top: 20px;
-        left: 20px;
+        align-self: flex-start;
         width: 300px;
       }
-      
+
       .info-panel {
-        position: absolute;
-        top: 20px;
-        right: 20px;
+        align-self: flex-end;
         width: 350px;
         max-height: 80vh;
         overflow-y: auto;
+      }
+
+      .object-info-panel {
+        align-self: center;
+        margin-bottom: 20px;
+      }
+
+      /* Mobile-first */
+      @media (max-width: 768px) {
+        .ui-container {
+          position: relative;
+          height: auto;
+        }
+
+        .ui-panel {
+          width: calc(100% - 20px);
+          margin: 10px auto;
+        }
+
+        .controls-panel, .info-panel, .object-info-panel {
+          align-self: center;
+          width: calc(100% - 20px);
+        }
+
+        .info-panel {
+          max-height: 50vh;
+        }
       }
       
       /* Estilos personalizados para barras de scroll */
@@ -462,13 +481,12 @@
         .status-bar .ui-panel {
           width: 100%;
           margin: 0;
-          padding: 5px 10px;
+          padding: 3px 8px;
           text-align: center;
           background: transparent;
           border: none;
         }
         
-        /* Ajustes para botones en móvil */
         .ui-button {
           padding: 12px 16px;
           margin: 5px 2px;
@@ -476,7 +494,16 @@
           min-height: 44px; /* Tamaño mínimo recomendado para touch */
         }
         
-        /* Ajustes para la cuadrícula de información */
+        .ui-section {
+          margin-bottom: 8px;
+          padding: 8px;
+        }
+        
+        .ui-section h3 {
+          font-size: 11px;
+          margin-bottom: 5px;
+        }
+        
         .info-grid {
           grid-template-columns: 1fr;
         }
@@ -597,37 +624,51 @@
     
     <!-- Contenedor de la UI -->
     <div class="ui-container" id="ui-container" style="display: none;">
-      <!-- Panel de controles -->
-      <div class="ui-panel controls-panel" id="controls-panel">
-        <div class="ui-section">
-          <h3>Controles de Simulación</h3>
-          <button class="ui-button" id="pause-btn">Pausar</button>
-          <button class="ui-button" id="reset-camera-btn">Resetear Cámara</button>
-          <button class="ui-button" id="stop-follow-btn">Dejar de Seguir</button>
+      <!-- Contenedor superior para móviles (controles + lista de planetas) -->
+      <div class="top-mobile-container">
+        <!-- Panel de controles -->
+        <div class="ui-panel controls-panel" id="controls-panel">
+          <div class="ui-section">
+            <h3>Controles de Simulación</h3>
+            <button class="ui-button" id="pause-btn">Pausar</button>
+            <button class="ui-button" id="reset-camera-btn">Resetear Cámara</button>
+            <button class="ui-button" id="stop-follow-btn">Dejar de Seguir</button>
+          </div>
+          
+          <div class="ui-section">
+            <h3>Velocidad de Tiempo</h3>
+            <input type="range" class="ui-slider" id="time-scale" min="0.0001" max="5" step="0.0001" value="0.001">
+            <div id="time-scale-value">1.0x</div>
+          </div>
+          
+          <div class="ui-section">
+            <h3>Opciones Visuales</h3>
+            <label class="ui-checkbox">
+              <input type="checkbox" id="show-orbits" checked> Mostrar Órbitas
+            </label>
+            <label class="ui-checkbox">
+              <input type="checkbox" id="show-labels" checked> Mostrar Etiquetas
+            </label>
+          </div>
+          
+          <div class="ui-section">
+            <h3>Herramientas</h3>
+            <button class="ui-button" id="export-data-btn">Exportar Datos</button>
+            <button class="ui-button" id="hide-ui-btn">Ocultar UI</button>
+          </div>
         </div>
         
-        <div class="ui-section">
-          <h3>Velocidad de Tiempo</h3>
-          <input type="range" class="ui-slider" id="time-scale" min="0.0001" max="5" step="0.0001" value="0.001">
-          <div id="time-scale-value">1.0x</div>
+        <!-- Lista de planetas -->
+        <div class="ui-panel planet-list" id="planet-list">
+          <div class="ui-section">
+            <h3>Planetas</h3>
+            <div id="planet-items"></div>
+          </div>
         </div>
-        
-        <div class="ui-section">
-          <h3>Opciones Visuales</h3>
-          <label class="ui-checkbox">
-            <input type="checkbox" id="show-orbits" checked> Mostrar Órbitas
-          </label>
-          <label class="ui-checkbox">
-            <input type="checkbox" id="show-labels" checked> Mostrar Etiquetas
-          </label>
-
-        </div>
-        
-        <div class="ui-section">
-          <h3>Herramientas</h3>
-          <button class="ui-button" id="export-data-btn">Exportar Datos</button>
-          <button class="ui-button" id="hide-ui-btn">Ocultar UI</button>
-        </div>
+      </div>
+      
+      <div id="object-info-panel" class="ui-panel object-info-panel" style="display: none;">
+        <!-- Información del objeto seleccionado -->
       </div>
       
       <!-- Panel de información -->
@@ -640,14 +681,6 @@
           <div id="planet-info">
             <p>Haz clic en un planeta para ver su información</p>
           </div>
-        </div>
-      </div>
-      
-      <!-- Lista de planetas -->
-      <div class="ui-panel planet-list" id="planet-list">
-        <div class="ui-section">
-          <h3>Planetas</h3>
-          <div id="planet-items"></div>
         </div>
       </div>
       

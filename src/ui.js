@@ -21,27 +21,13 @@ export class UI {
     
     init() {
         this.getElements();
-        this.checkDeviceType();
         this.setupEventListeners();
         this.updatePlanetList();
         this.setDefaultValues();
         this.initCustomScrollBehavior();
-        this.setupResponsiveLayout();
         this.hideLoading();
         this.isInitialized = true;
-    }
-    
-    checkDeviceType() {
-        // Detectar si es un dispositivo móvil basado en el ancho de la pantalla
-        this.isMobile = window.innerWidth <= 768;
-        document.body.classList.toggle('mobile-device', this.isMobile);
-    }
-    
-    setupResponsiveLayout() {
-        // Configurar el layout inicial basado en el tipo de dispositivo
-        this.adjustLayoutForScreenSize();
-        
-        // Añadir listener para el redimensionamiento de la ventana
+
         window.addEventListener('resize', () => {
             this.checkDeviceType();
             this.adjustLayoutForScreenSize();
@@ -84,6 +70,8 @@ export class UI {
         this.elements = {
             loading: document.getElementById('loading'),
             uiContainer: document.getElementById('ui-container'),
+            controlsPanel: document.getElementById('controls-panel'),
+            objectInfoPanel: document.getElementById('object-info-panel'),
             pauseBtn: document.getElementById('pause-btn'),
             resetCameraBtn: document.getElementById('reset-camera-btn'),
             stopFollowBtn: document.getElementById('stop-follow-btn'),
@@ -179,6 +167,18 @@ export class UI {
         });
     }
     
+    updateObjectInfo(planet) {
+        if (!this.elements.objectInfoPanel) return;
+
+        if (planet) {
+            this.elements.objectInfoPanel.style.display = 'block';
+            // Aquí puedes poblar el panel con la información del planeta
+            this.elements.objectInfoPanel.innerHTML = `<h3>${planet.data.name}</h3>`;
+        } else {
+            this.elements.objectInfoPanel.style.display = 'none';
+        }
+    }
+
     updatePlanetList() {
         if (!this.elements.planetItems) return;
         
@@ -193,6 +193,7 @@ export class UI {
             // Añadir eventos para escritorio y móvil
             planetItem.addEventListener('click', () => {
                 this.selectPlanet(planet);
+                this.updateObjectInfo(planet);
             });
             
             // Añadir eventos táctiles específicos para móviles
@@ -676,7 +677,7 @@ export class UI {
     // Método para personalizar el comportamiento del scroll
     initCustomScrollBehavior() {
         // Agregar efectos de scroll suave para elementos específicos
-        const scrollableElements = ['.info-panel', '.planet-list'];
+        const scrollableElements = ['.info-panel', '.planet-list', '.controls-panel'];
         
         scrollableElements.forEach(selector => {
             const element = document.querySelector(selector);
