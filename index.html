@@ -76,19 +76,22 @@
       
       /* Estilos personalizados para barras de scroll */
       .info-panel::-webkit-scrollbar,
-      .planet-list::-webkit-scrollbar {
+      .planet-list::-webkit-scrollbar,
+      .controls-panel::-webkit-scrollbar {
         width: 8px;
       }
       
       .info-panel::-webkit-scrollbar-track,
-      .planet-list::-webkit-scrollbar-track {
+      .planet-list::-webkit-scrollbar-track,
+      .controls-panel::-webkit-scrollbar-track {
         background: rgba(255, 255, 255, 0.05);
         border-radius: 4px;
         margin: 4px;
       }
       
       .info-panel::-webkit-scrollbar-thumb,
-      .planet-list::-webkit-scrollbar-thumb {
+      .planet-list::-webkit-scrollbar-thumb,
+      .controls-panel::-webkit-scrollbar-thumb {
         background: linear-gradient(180deg, #4CAF50, #2E7D32);
         border-radius: 4px;
         border: 1px solid rgba(255, 255, 255, 0.1);
@@ -96,31 +99,36 @@
       }
       
       .info-panel::-webkit-scrollbar-thumb:hover,
-      .planet-list::-webkit-scrollbar-thumb:hover {
+      .planet-list::-webkit-scrollbar-thumb:hover,
+      .controls-panel::-webkit-scrollbar-thumb:hover {
         background: linear-gradient(180deg, #66BB6A, #4CAF50);
         box-shadow: 0 2px 8px rgba(76, 175, 80, 0.4);
       }
       
       .info-panel::-webkit-scrollbar-thumb:active,
-      .planet-list::-webkit-scrollbar-thumb:active {
+      .planet-list::-webkit-scrollbar-thumb:active,
+      .controls-panel::-webkit-scrollbar-thumb:active {
         background: linear-gradient(180deg, #81C784, #66BB6A);
       }
       
       .info-panel::-webkit-scrollbar-corner,
-      .planet-list::-webkit-scrollbar-corner {
+      .planet-list::-webkit-scrollbar-corner,
+      .controls-panel::-webkit-scrollbar-corner {
         background: rgba(255, 255, 255, 0.05);
       }
       
       /* Estilos para Firefox */
       .info-panel,
-      .planet-list {
+      .planet-list,
+      .controls-panel {
         scrollbar-width: thin;
         scrollbar-color: #4CAF50 rgba(255, 255, 255, 0.05);
       }
       
       /* Efectos de transición suaves para el scroll */
       .info-panel,
-      .planet-list {
+      .planet-list,
+      .controls-panel {
         scroll-behavior: smooth;
       }
       
@@ -176,6 +184,23 @@
       }
       
       .info-panel.has-scroll::after {
+        opacity: 1;
+      }
+      
+      .controls-panel::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 20px;
+        background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+      
+      .controls-panel.has-scroll::after {
         opacity: 1;
       }
       
@@ -456,37 +481,51 @@
         .ui-container {
           display: flex;
           flex-direction: column;
-          height: 100%;
-          overflow-y: auto;
-          padding-bottom: 60px; /* Espacio para la barra de estado */
+          height: 100vh;
+          overflow: hidden;
+          padding: 0;
+          padding-bottom: 40px;
         }
         
-        .controls-panel,
-        .info-panel,
-        .planet-list {
-          position: relative;
-          width: calc(100% - 20px);
-          margin: 10px;
-          max-height: none;
-          left: 0;
-          right: 0;
-          top: 0;
-          bottom: auto;
+        .top-mobile-container {
+          display: flex;
+          flex-direction: row;
+          width: 100%;
+          max-height: 40vh;
+          gap: 4px;
+          padding: 4px;
+          flex-shrink: 0;
         }
         
         .controls-panel {
-          order: 1;
-        }
-        
-        .info-panel {
-          order: 2;
-          max-height: 300px;
+          position: relative;
+          width: 60%;
+          margin: 0;
+          padding: 8px;
+          font-size: 12px;
+          max-height: 100%;
           overflow-y: auto;
         }
         
         .planet-list {
-          order: 3;
-          max-height: 150px;
+          position: relative;
+          width: 40%;
+          margin: 0;
+          padding: 8px;
+          font-size: 12px;
+          max-height: 100%;
+          overflow-y: auto;
+        }
+        
+        .info-panel {
+          position: relative;
+          width: calc(100% - 10px);
+          margin: 5px;
+          padding: 8px;
+          font-size: 12px;
+          max-height: 30vh;
+          overflow-y: auto;
+          flex-shrink: 0;
         }
         
         .status-bar {
@@ -495,30 +534,73 @@
           left: 0;
           right: 0;
           width: 100%;
-          padding: 5px;
-          background: rgba(0, 0, 0, 0.8);
+          height: 40px;
+          padding: 3px;
+          background: rgba(0, 0, 0, 0.9);
           z-index: 1001;
           display: flex;
           justify-content: center;
+          font-size: 10px;
+          border-top: 1px solid #333;
         }
         
         .status-bar .ui-panel {
           width: 100%;
           margin: 0;
-          padding: 5px 10px;
+          padding: 3px 8px;
           text-align: center;
         }
         
-        /* Ajustes para botones en móvil */
         .ui-button {
-          padding: 10px 16px;
-          margin: 5px 2px;
-          font-size: 14px;
+          padding: 6px 10px;
+          margin: 2px 1px;
+          font-size: 11px;
         }
         
-        /* Ajustes para la cuadrícula de información */
+        .ui-section {
+          margin-bottom: 8px;
+          padding: 8px;
+        }
+        
+        .ui-section h3 {
+          font-size: 11px;
+          margin-bottom: 5px;
+        }
+        
         .info-grid {
           grid-template-columns: 1fr;
+          gap: 5px;
+        }
+        
+        .info-item {
+          padding: 4px;
+        }
+        
+        .info-label {
+          font-size: 9px;
+        }
+        
+        .info-value {
+          font-size: 10px;
+        }
+        
+        .planet-item {
+          padding: 4px;
+          margin: 1px 0;
+          font-size: 11px;
+        }
+        
+        .ui-slider {
+          margin: 5px 0;
+          height: 4px;
+        }
+        
+        #time-scale-value {
+          font-size: 10px;
+        }
+        
+        .keyboard-instructions {
+          display: none;
         }
       }
       
@@ -560,36 +642,46 @@
     
     <!-- Contenedor de la UI -->
     <div class="ui-container" id="ui-container" style="display: none;">
-      <!-- Panel de controles -->
-      <div class="ui-panel controls-panel" id="controls-panel">
-        <div class="ui-section">
-          <h3>Controles de Simulación</h3>
-          <button class="ui-button" id="pause-btn">Pausar</button>
-          <button class="ui-button" id="reset-camera-btn">Resetear Cámara</button>
-          <button class="ui-button" id="stop-follow-btn">Dejar de Seguir</button>
+      <!-- Contenedor superior para móviles (controles + lista de planetas) -->
+      <div class="top-mobile-container">
+        <!-- Panel de controles -->
+        <div class="ui-panel controls-panel" id="controls-panel">
+          <div class="ui-section">
+            <h3>Controles de Simulación</h3>
+            <button class="ui-button" id="pause-btn">Pausar</button>
+            <button class="ui-button" id="reset-camera-btn">Resetear Cámara</button>
+            <button class="ui-button" id="stop-follow-btn">Dejar de Seguir</button>
+          </div>
+          
+          <div class="ui-section">
+            <h3>Velocidad de Tiempo</h3>
+            <input type="range" class="ui-slider" id="time-scale" min="0.0001" max="5" step="0.0001" value="0.001">
+            <div id="time-scale-value">1.0x</div>
+          </div>
+          
+          <div class="ui-section">
+            <h3>Opciones Visuales</h3>
+            <label class="ui-checkbox">
+              <input type="checkbox" id="show-orbits" checked> Mostrar Órbitas
+            </label>
+            <label class="ui-checkbox">
+              <input type="checkbox" id="show-labels" checked> Mostrar Etiquetas
+            </label>
+          </div>
+          
+          <div class="ui-section">
+            <h3>Herramientas</h3>
+            <button class="ui-button" id="export-data-btn">Exportar Datos</button>
+            <button class="ui-button" id="hide-ui-btn">Ocultar UI</button>
+          </div>
         </div>
         
-        <div class="ui-section">
-          <h3>Velocidad de Tiempo</h3>
-          <input type="range" class="ui-slider" id="time-scale" min="0.0001" max="5" step="0.0001" value="0.001">
-          <div id="time-scale-value">1.0x</div>
-        </div>
-        
-        <div class="ui-section">
-          <h3>Opciones Visuales</h3>
-          <label class="ui-checkbox">
-            <input type="checkbox" id="show-orbits" checked> Mostrar Órbitas
-          </label>
-          <label class="ui-checkbox">
-            <input type="checkbox" id="show-labels" checked> Mostrar Etiquetas
-          </label>
-
-        </div>
-        
-        <div class="ui-section">
-          <h3>Herramientas</h3>
-          <button class="ui-button" id="export-data-btn">Exportar Datos</button>
-          <button class="ui-button" id="hide-ui-btn">Ocultar UI</button>
+        <!-- Lista de planetas -->
+        <div class="ui-panel planet-list" id="planet-list">
+          <div class="ui-section">
+            <h3>Planetas</h3>
+            <div id="planet-items"></div>
+          </div>
         </div>
       </div>
       
@@ -603,14 +695,6 @@
           <div id="planet-info">
             <p>Haz clic en un planeta para ver su información</p>
           </div>
-        </div>
-      </div>
-      
-      <!-- Lista de planetas -->
-      <div class="ui-panel planet-list" id="planet-list">
-        <div class="ui-section">
-          <h3>Planetas</h3>
-          <div id="planet-items"></div>
         </div>
       </div>
       

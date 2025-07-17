@@ -86,6 +86,7 @@ export class UI {
         this.elements = {
             loading: document.getElementById('loading'),
             uiContainer: document.getElementById('ui-container'),
+            controlsPanel: document.getElementById('controls-panel'),
             pauseBtn: document.getElementById('pause-btn'),
             resetCameraBtn: document.getElementById('reset-camera-btn'),
             stopFollowBtn: document.getElementById('stop-follow-btn'),
@@ -711,12 +712,52 @@ export class UI {
                 }
             }
         }
+        
+        // Verificar panel de controles
+        if (this.elements.controlsPanel) {
+            const controlsPanel = this.elements.controlsPanel;
+            const hasVerticalScroll = controlsPanel.scrollHeight > controlsPanel.clientHeight;
+            
+            if (hasVerticalScroll) {
+                controlsPanel.classList.add('has-scroll');
+                
+                // Añadir indicadores de scroll específicos para móviles
+                if (this.isMobile && !controlsPanel.querySelector('.mobile-scroll-indicator')) {
+                    const scrollIndicator = document.createElement('div');
+                    scrollIndicator.className = 'mobile-scroll-indicator';
+                    scrollIndicator.innerHTML = '<span>&#8595;</span>'; // Flecha hacia abajo
+                    controlsPanel.appendChild(scrollIndicator);
+                    
+                    // Ocultar el indicador cuando se hace scroll
+                    controlsPanel.addEventListener('scroll', () => {
+                        const scrollTop = controlsPanel.scrollTop;
+                        const scrollHeight = controlsPanel.scrollHeight;
+                        const clientHeight = controlsPanel.clientHeight;
+                        
+                        // Si estamos cerca del final, ocultar el indicador
+                        if (scrollTop + clientHeight > scrollHeight - 50) {
+                            scrollIndicator.style.opacity = '0';
+                        } else {
+                            scrollIndicator.style.opacity = '1';
+                        }
+                    }, { passive: true });
+                }
+            } else {
+                controlsPanel.classList.remove('has-scroll');
+                
+                // Eliminar indicador si existe y no es necesario
+                const indicator = controlsPanel.querySelector('.mobile-scroll-indicator');
+                if (indicator) {
+                    indicator.remove();
+                }
+            }
+        }
     }
     
     // Método para personalizar el comportamiento del scroll
     initCustomScrollBehavior() {
         // Agregar efectos de scroll suave para elementos específicos
-        const scrollableElements = ['.info-panel', '.planet-list'];
+        const scrollableElements = ['.info-panel', '.planet-list', '.controls-panel'];
         
         scrollableElements.forEach(selector => {
             const element = document.querySelector(selector);
