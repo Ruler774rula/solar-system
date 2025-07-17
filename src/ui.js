@@ -21,55 +21,16 @@ export class UI {
     
     init() {
         this.getElements();
-        this.checkDeviceType();
         this.setupEventListeners();
         this.updatePlanetList();
         this.setDefaultValues();
         this.initCustomScrollBehavior();
-        this.setupResponsiveLayout();
         this.hideLoading();
         this.isInitialized = true;
-    }
-    
-    checkDeviceType() {
-        // Detectar si es un dispositivo móvil basado en el ancho de la pantalla
-        this.isMobile = window.innerWidth <= 768;
-        document.body.classList.toggle('mobile-device', this.isMobile);
-    }
-    
-    setupResponsiveLayout() {
-        // Configurar el layout inicial basado en el tipo de dispositivo
-        this.adjustLayoutForScreenSize();
-        
-        // Añadir listener para el redimensionamiento de la ventana
+
         window.addEventListener('resize', () => {
-            this.checkDeviceType();
-            this.adjustLayoutForScreenSize();
             this.checkScrollIndicators();
         });
-        
-        // Añadir listener para cambios de orientación en dispositivos móviles
-        window.addEventListener('orientationchange', () => {
-            setTimeout(() => {
-                this.checkDeviceType();
-                this.adjustLayoutForScreenSize();
-                this.checkScrollIndicators();
-            }, 200); // Pequeño retraso para asegurar que los cambios de orientación se completen
-        });
-    }
-    
-    adjustLayoutForScreenSize() {
-        if (this.isMobile) {
-            // Ajustes específicos para móviles
-            if (this.elements.uiContainer) {
-                this.elements.uiContainer.classList.add('mobile-layout');
-            }
-        } else {
-            // Ajustes para escritorio
-            if (this.elements.uiContainer) {
-                this.elements.uiContainer.classList.remove('mobile-layout');
-            }
-        }
     }
     
     setDefaultValues() {
@@ -87,6 +48,7 @@ export class UI {
             loading: document.getElementById('loading'),
             uiContainer: document.getElementById('ui-container'),
             controlsPanel: document.getElementById('controls-panel'),
+            objectInfoPanel: document.getElementById('object-info-panel'),
             pauseBtn: document.getElementById('pause-btn'),
             resetCameraBtn: document.getElementById('reset-camera-btn'),
             stopFollowBtn: document.getElementById('stop-follow-btn'),
@@ -182,6 +144,18 @@ export class UI {
         });
     }
     
+    updateObjectInfo(planet) {
+        if (!this.elements.objectInfoPanel) return;
+
+        if (planet) {
+            this.elements.objectInfoPanel.style.display = 'block';
+            // Aquí puedes poblar el panel con la información del planeta
+            this.elements.objectInfoPanel.innerHTML = `<h3>${planet.data.name}</h3>`;
+        } else {
+            this.elements.objectInfoPanel.style.display = 'none';
+        }
+    }
+
     updatePlanetList() {
         if (!this.elements.planetItems) return;
         
@@ -196,6 +170,7 @@ export class UI {
             // Añadir eventos para escritorio y móvil
             planetItem.addEventListener('click', () => {
                 this.selectPlanet(planet);
+                this.updateObjectInfo(planet);
             });
             
             // Añadir eventos táctiles específicos para móviles

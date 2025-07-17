@@ -25,19 +25,11 @@
         overflow-y: auto;
         overflow-x: hidden;
       }
-      
-      /* Ajustes para la UI en modo móvil */
-      .mobile-layout {
-        display: flex !important;
-        flex-direction: column !important;
-        height: 100% !important;
-        overflow-y: auto !important;
-      }
-      
+
       canvas {
         display: block;
       }
-      
+
       /* Estilos para la UI */
       .ui-container {
         position: fixed;
@@ -47,8 +39,11 @@
         height: 100%;
         pointer-events: none;
         z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
       }
-      
+
       .ui-panel {
         pointer-events: auto;
         background: rgba(0, 0, 0, 0.8);
@@ -56,22 +51,46 @@
         border-radius: 8px;
         padding: 15px;
         backdrop-filter: blur(10px);
+        margin: 10px;
       }
-      
+
       .controls-panel {
-        position: absolute;
-        top: 20px;
-        left: 20px;
+        align-self: flex-start;
         width: 300px;
       }
-      
+
       .info-panel {
-        position: absolute;
-        top: 20px;
-        right: 20px;
+        align-self: flex-end;
         width: 350px;
         max-height: 80vh;
         overflow-y: auto;
+      }
+
+      .object-info-panel {
+        align-self: center;
+        margin-bottom: 20px;
+      }
+
+      /* Mobile-first */
+      @media (max-width: 768px) {
+        .ui-container {
+          position: relative;
+          height: auto;
+        }
+
+        .ui-panel {
+          width: calc(100% - 20px);
+          margin: 10px auto;
+        }
+
+        .controls-panel, .info-panel, .object-info-panel {
+          align-self: center;
+          width: calc(100% - 20px);
+        }
+
+        .info-panel {
+          max-height: 50vh;
+        }
       }
       
       /* Estilos personalizados para barras de scroll */
@@ -683,6 +702,10 @@
             <div id="planet-items"></div>
           </div>
         </div>
+      </div>
+      
+      <div id="object-info-panel" class="ui-panel object-info-panel" style="display: none;">
+        <!-- Información del objeto seleccionado -->
       </div>
       
       <!-- Panel de información -->
