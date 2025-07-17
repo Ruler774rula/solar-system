@@ -5,6 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Sistema Solar Realista - Simulador Arcade</title>
     <style>
+      /* Bloquear la orientación a vertical en móviles */
+      @media (max-width: 768px) {
+        html, body {
+          overflow: hidden;
+        }
+      }
+
+      @media (max-width: 768px) and (orientation: landscape) and (pointer: coarse) {
+        html {
+          transform: rotate(-90deg);
+          transform-origin: left top;
+          width: 100vh;
+          height: 100vw;
+          overflow-x: hidden;
+          position: absolute;
+          top: 100%;
+          left: 0;
+        }
+      }
       * {
         margin: 0;
         padding: 0;
@@ -71,6 +90,16 @@
         right: 20px;
         width: 350px;
         max-height: 80vh;
+        overflow-y: auto;
+      }
+
+      .controls-panel.compact {
+        max-height: 160px; /* Más comprimido */
+        overflow-y: auto;
+      }
+
+      .info-panel.expanded {
+        max-height: 350px; /* Más expandido */
         overflow-y: auto;
       }
       
@@ -598,12 +627,13 @@
     <!-- Contenedor de la UI -->
     <div class="ui-container" id="ui-container" style="display: none;">
       <!-- Panel de controles -->
-      <div class="ui-panel controls-panel" id="controls-panel">
+      <div class="ui-panel controls-panel compact" id="controls-panel">
         <div class="ui-section">
           <h3>Controles de Simulación</h3>
           <button class="ui-button" id="pause-btn">Pausar</button>
           <button class="ui-button" id="reset-camera-btn">Resetear Cámara</button>
           <button class="ui-button" id="stop-follow-btn">Dejar de Seguir</button>
+          <button class="ui-button" id="hide-ui-btn">Ocultar UI</button>
         </div>
         
         <div class="ui-section">
@@ -626,7 +656,6 @@
         <div class="ui-section">
           <h3>Herramientas</h3>
           <button class="ui-button" id="export-data-btn">Exportar Datos</button>
-          <button class="ui-button" id="hide-ui-btn">Ocultar UI</button>
         </div>
       </div>
       

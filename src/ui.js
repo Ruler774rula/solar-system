@@ -9,7 +9,7 @@ export class UI {
         this.elements = {};
         this.isInitialized = false;
         this.isVisible = true;
-        this.isMobile = false;
+
         
         // Esperar a que el DOM esté listo
         if (document.readyState === 'loading') {
@@ -21,7 +21,7 @@ export class UI {
     
     init() {
         this.getElements();
-        this.checkDeviceType();
+
         this.setupEventListeners();
         this.updatePlanetList();
         this.setDefaultValues();
@@ -31,44 +31,30 @@ export class UI {
         this.isInitialized = true;
     }
     
-    checkDeviceType() {
-        // Detectar si es un dispositivo móvil basado en el ancho de la pantalla
-        this.isMobile = window.innerWidth <= 768;
-        document.body.classList.toggle('mobile-device', this.isMobile);
-    }
+
     
     setupResponsiveLayout() {
-        // Configurar el layout inicial basado en el tipo de dispositivo
-        this.adjustLayoutForScreenSize();
-        
-        // Añadir listener para el redimensionamiento de la ventana
-        window.addEventListener('resize', () => {
-            this.checkDeviceType();
-            this.adjustLayoutForScreenSize();
-        });
-        
-        // Añadir listener para cambios de orientación en dispositivos móviles
-        window.addEventListener('orientationchange', () => {
-            setTimeout(() => {
-                this.checkDeviceType();
-                this.adjustLayoutForScreenSize();
-            }, 200); // Pequeño retraso para asegurar que los cambios de orientación se completen
-        });
-    }
-    
-    adjustLayoutForScreenSize() {
-        if (this.isMobile) {
-            // Ajustes específicos para móviles
-            if (this.elements.uiContainer) {
-                this.elements.uiContainer.classList.add('mobile-layout');
-            }
-        } else {
-            // Ajustes para escritorio
-            if (this.elements.uiContainer) {
-                this.elements.uiContainer.classList.remove('mobile-layout');
-            }
+        // Gestionar estados de compresión/expansión de paneles
+        const controlsPanel = document.getElementById('controls-panel');
+        const infoPanel = document.getElementById('info-panel');
+
+        // Añadir clase compact al panel de controles por defecto
+        if (controlsPanel) {
+            controlsPanel.classList.add('compact');
+        }
+
+        // Contraer panel de información cuando se cierra
+        const closeInfoBtn = document.querySelector('.close-info-btn');
+        if (closeInfoBtn) {
+            closeInfoBtn.addEventListener('click', () => {
+                if (infoPanel) {
+                    infoPanel.classList.remove('expanded');
+                }
+            });
         }
     }
+    
+
     
     setDefaultValues() {
         // Configurar velocidad por defecto a 1.0x con velocidad moderada
@@ -193,25 +179,12 @@ export class UI {
             // Añadir eventos para escritorio y móvil
             planetItem.addEventListener('click', () => {
                 this.selectPlanet(planet);
+                // Expandir panel de información cuando se selecciona un planeta
+                const infoPanel = document.getElementById('info-panel');
+                if (infoPanel) {
+                    infoPanel.classList.add('expanded');
+                }
             });
-            
-            // Añadir eventos táctiles específicos para móviles
-            if (this.isMobile) {
-                planetItem.addEventListener('touchstart', function() {
-                    this.classList.add('touch-active');
-                }, { passive: true });
-                
-                planetItem.addEventListener('touchend', function() {
-                    this.classList.remove('touch-active');
-                    // No necesitamos llamar a selectPlanet aquí porque el evento click se disparará automáticamente
-                }, { passive: true });
-                
-                // Añadir indicador visual para dispositivos táctiles
-                const touchIndicator = document.createElement('span');
-                touchIndicator.className = 'touch-indicator';
-                touchIndicator.innerHTML = '&#10148;'; // Flecha pequeña
-                planetItem.appendChild(touchIndicator);
-            }
             
             this.elements.planetItems.appendChild(planetItem);
         });
@@ -248,14 +221,9 @@ export class UI {
     updatePlanetInfo(planetInfo) {
         if (!this.elements.planetInfo || !planetInfo) return;
         
-        // Ajustar el diseño según el tipo de dispositivo
-        const titleStyle = this.isMobile ? 
-            "position: relative; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.2); margin-bottom: 10px; text-align: center;" :
-            "position: relative; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.2); margin-bottom: 15px;";
-            
-        const titleTextStyle = this.isMobile ?
-            "margin: 0; font-size: 18px;" :
-            "margin: 0; padding-right: 30px;";
+        // Usar un estilo único para todos los dispositivos
+        const titleStyle = "position: relative; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.2); margin-bottom: 15px;";
+        const titleTextStyle = "margin: 0; padding-right: 30px;";
         
         const html = `
             <div style="${titleStyle}">
@@ -522,28 +490,16 @@ export class UI {
         if (show) {
             // Mostrar UI
             if (this.elements.uiContainer) {
-                if (this.isMobile) {
-                    this.elements.uiContainer.style.display = 'flex';
-                    this.elements.uiContainer.classList.remove('mobile-hidden');
-                } else {
-                    this.elements.uiContainer.style.display = 'block';
-                }
-                
-                // Reajustar el layout después de mostrar la UI
-                if (this.isMobile) {
-                    this.adjustLayoutForScreenSize();
-                }
+                this.elements.uiContainer.style.display = 'block';
+                this.elements.uiContainer.classList.remove('mobile-hidden');
             }
             // Ocultar botón de mostrar UI
             this.hideShowUIButton();
         } else {
             // Ocultar UI
             if (this.elements.uiContainer) {
-                if (this.isMobile) {
-                    this.elements.uiContainer.classList.add('mobile-hidden');
-                } else {
-                    this.elements.uiContainer.style.display = 'none';
-                }
+                this.elements.uiContainer.style.display = 'none';
+                this.elements.uiContainer.classList.add('mobile-hidden');
             }
             // Mostrar botón de mostrar UI
             this.createShowUIButton();
@@ -574,67 +530,49 @@ export class UI {
             align-items: center;
             justify-content: center;
             font-weight: bold;
+            top: 20px;
+            left: 20px;
+            width: 44px;
+            height: 44px;
+            font-size: 18px;
         `;
-        
-        // Ajustar estilos según el tipo de dispositivo
-        if (this.isMobile) {
-            buttonStyles += `
-                top: 15px;
-                left: 15px;
-                width: 56px;
-                height: 56px;
-                font-size: 24px;
-            `;
-        } else {
-            buttonStyles += `
-                top: 20px;
-                left: 20px;
-                width: 44px;
-                height: 44px;
-                font-size: 18px;
-            `;
-        }
         
         button.style.cssText = buttonStyles;
         
-        // Eventos para escritorio
-        if (!this.isMobile) {
-            button.addEventListener('mouseenter', () => {
-                button.style.background = 'rgba(76, 175, 80, 0.2)';
-                button.style.borderColor = '#66BB6A';
-                button.style.color = '#66BB6A';
-                button.style.transform = 'scale(1.1)';
-            });
-            
-            button.addEventListener('mouseleave', () => {
-                button.style.background = 'rgba(0, 0, 0, 0.3)';
-                button.style.borderColor = '#4CAF50';
-                button.style.color = '#4CAF50';
-                button.style.transform = 'scale(1)';
-            });
-        }
+        // Eventos para hover
+        button.addEventListener('mouseenter', () => {
+            button.style.background = 'rgba(76, 175, 80, 0.2)';
+            button.style.borderColor = '#66BB6A';
+            button.style.color = '#66BB6A';
+            button.style.transform = 'scale(1.1)';
+        });
+        
+        button.addEventListener('mouseleave', () => {
+            button.style.background = 'rgba(0, 0, 0, 0.3)';
+            button.style.borderColor = '#4CAF50';
+            button.style.color = '#4CAF50';
+            button.style.transform = 'scale(1)';
+        });
         
         // Evento de clic para todos los dispositivos
         button.addEventListener('click', () => {
             this.simulator.toggleUI();
         });
         
-        // Añadir evento de toque para dispositivos móviles
-        if (this.isMobile) {
-            button.addEventListener('touchstart', () => {
-                button.style.transform = 'scale(1.1)';
-                button.style.background = 'rgba(76, 175, 80, 0.2)';
-                button.style.borderColor = '#66BB6A';
-                button.style.color = '#66BB6A';
-            }, { passive: true });
-            
-            button.addEventListener('touchend', () => {
-                button.style.transform = 'scale(1)';
-                button.style.background = 'rgba(0, 0, 0, 0.3)';
-                button.style.borderColor = '#4CAF50';
-                button.style.color = '#4CAF50';
-            }, { passive: true });
-        }
+        // Añadir eventos de toque
+        button.addEventListener('touchstart', () => {
+            button.style.transform = 'scale(1.1)';
+            button.style.background = 'rgba(76, 175, 80, 0.2)';
+            button.style.borderColor = '#66BB6A';
+            button.style.color = '#66BB6A';
+        }, { passive: true });
+        
+        button.addEventListener('touchend', () => {
+            button.style.transform = 'scale(1)';
+            button.style.background = 'rgba(0, 0, 0, 0.3)';
+            button.style.borderColor = '#4CAF50';
+            button.style.color = '#4CAF50';
+        }, { passive: true });
         
         document.body.appendChild(button);
     }
