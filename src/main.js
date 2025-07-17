@@ -466,7 +466,17 @@ class RealisticSolarSystem {
             
             // Actualizar UI
             if (this.ui) {
-                this.ui.updateSelectedPlanet(planet);
+                // Actualizar selección en la lista de planetas
+                const planetItems = this.ui.elements.planetItems.querySelectorAll('.planet-item');
+                planetItems.forEach(item => item.classList.remove('selected'));
+                
+                const selectedItem = Array.from(planetItems).find(item => 
+                    item.textContent === planet.data.name
+                );
+                if (selectedItem) {
+                    selectedItem.classList.add('selected');
+                }
+                
                 this.ui.updatePlanetInfo(planet.getInfo(this.camera, this.controls));
             }
         } else {

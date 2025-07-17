@@ -131,7 +131,7 @@ export class OrbitalMechanics {
         
         const material = new LineMaterial({
             color: 0x888888,
-            linewidth: 3, // Líneas más gruesas que se ven bien al hacer zoom
+            linewidth: 2, // Líneas un poco menos gruesas
             transparent: true,
             opacity: 0.7,
             resolution: new THREE.Vector2(window.innerWidth, window.innerHeight)

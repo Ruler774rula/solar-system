@@ -399,7 +399,7 @@ export class RealisticPlanet {
         // Personalizar color de órbita según el planeta - más gruesa y luminosa
         const orbitColor = this.getOrbitColor();
         this.orbitLine.material.color.setHex(orbitColor);
-        this.orbitLine.material.linewidth = 3; // Más gruesa
+        this.orbitLine.material.linewidth = 2; // Un poco menos gruesa
         this.orbitLine.material.transparent = true;
         this.orbitLine.material.opacity = 0.8; // Más visible
     }
@@ -470,12 +470,12 @@ export class RealisticPlanet {
         this.selectionRing = new THREE.Mesh(sphereGeometry, sphereMaterial);
         this.selectionRing.userData = { planet: this, type: 'selectionRing' };
         
-        // Crear aro visual que apunta hacia la cámara
-        const ringGeometry = new THREE.RingGeometry(this.baseRingRadius * 0.9, this.baseRingRadius, 32);
+        // Crear aro visual que apunta hacia la cámara - siempre visible pero transparente
+        const ringGeometry = new THREE.RingGeometry(this.baseRingRadius * 0.85, this.baseRingRadius, 32); // Más grueso (0.85 en lugar de 0.9)
         const ringMaterial = new THREE.MeshBasicMaterial({
             color: this.data.color,
             transparent: true,
-            opacity: 0,
+            opacity: 0.3, // Más visible (0.3 en lugar de 0.2)
             side: THREE.DoubleSide,
             depthWrite: false,
             depthTest: true
@@ -483,6 +483,7 @@ export class RealisticPlanet {
         
         this.visualRing = new THREE.Mesh(ringGeometry, ringMaterial);
         this.visualRing.userData = { planet: this, type: 'visualRing' };
+        this.visualRing.visible = true; // Siempre visible
         
         // Añadir ambos al grupo del planeta
         this.group.add(this.selectionRing);
@@ -696,23 +697,30 @@ export class RealisticPlanet {
         }
         
         if (this.visualRing) {
-            if (selected) {
-                // Al seleccionar, primero ocultar el aro inmediatamente
-                this.visualRing.material.opacity = 0;
-                this.visualRing.visible = false;
-                
+                if (selected) {
                 // Cancelar animaciones previas
                 if (this.selectionRingAnimation) {
                     clearInterval(this.selectionRingAnimation);
                     this.selectionRingAnimation = null;
                 }
+                // Iniciar una animación de fade-in para el aro
+                this.visualRing.material.opacity = 0; // Empezar desde transparente
+                const fadeInAnimation = setInterval(() => {
+                    const newOpacity = this.visualRing.material.opacity + 0.05; // Aumento rápido
+                    if (newOpacity >= 0.3) {
+                        this.visualRing.material.opacity = 0.3;
+                        clearInterval(fadeInAnimation);
+                    } else {
+                        this.visualRing.material.opacity = newOpacity;
+                    }
+                }, 16); // Animación suave
             } else {
-                // Ocultar el aro cuando se deselecciona
+                // Cuando se deselecciona, volver a la opacidad apropiada
                 if (this.selectionRingAnimation) {
                     clearInterval(this.selectionRingAnimation);
                 }
                 
-                const targetOpacity = this.isHovered ? 0.6 : 0;
+                const targetOpacity = this.isHovered ? 0.8 : 0.3; // Volver a opacidad base o hover actualizada
                 const currentOpacity = this.visualRing.material.opacity;
                 const step = (targetOpacity - currentOpacity) / 10;
                 
@@ -721,9 +729,6 @@ export class RealisticPlanet {
                     
                     if ((step > 0 && newOpacity >= targetOpacity) || (step < 0 && newOpacity <= targetOpacity)) {
                         this.visualRing.material.opacity = targetOpacity;
-                        if (targetOpacity === 0) {
-                            this.visualRing.visible = false;
-                        }
                         clearInterval(this.selectionRingAnimation);
                         this.selectionRingAnimation = null;
                     } else {
@@ -737,23 +742,22 @@ export class RealisticPlanet {
     // Método separado para el fade in del aro después de la selección
     showSelectionRingWithFadeIn() {
         if (this.visualRing && this.isSelected && this.uiVisible !== false) {
-            // Mostrar el aro y comenzar fade in
-            this.visualRing.visible = true;
-            this.visualRing.material.opacity = 0;
+            // El aro ya está visible, solo ajustamos la opacidad
             
             // Cancelar animaciones previas
             if (this.selectionRingAnimation) {
                 clearInterval(this.selectionRingAnimation);
             }
             
-            // Animar fade in
-            const targetOpacity = 0.2; // Reducido para mayor transparencia
-            const step = targetOpacity / 20; // 20 pasos para una animación más suave
+            // Animar hacia una opacidad de selección
+            const targetOpacity = 0.3; // Opacidad para planeta seleccionado
+            const currentOpacity = this.visualRing.material.opacity;
+            const step = (targetOpacity - currentOpacity) / 20; // 20 pasos para una animación más suave
             
             this.selectionRingAnimation = setInterval(() => {
                 const newOpacity = this.visualRing.material.opacity + step;
                 
-                if (newOpacity >= targetOpacity) {
+                if ((step > 0 && newOpacity >= targetOpacity) || (step < 0 && newOpacity <= targetOpacity)) {
                     this.visualRing.material.opacity = targetOpacity;
                     clearInterval(this.selectionRingAnimation);
                     this.selectionRingAnimation = null;
@@ -767,29 +771,22 @@ export class RealisticPlanet {
     setHovered(hovered) {
         this.isHovered = hovered;
         
-        // Solo mostrar hover si el planeta no está seleccionado y la UI está visible
+        // El aro siempre está visible, solo cambiamos la opacidad
         if (this.visualRing && !this.isSelected && this.uiVisible !== false) {
             // Cancelar animaciones previas de hover
             if (this.hoverAnimation) {
                 clearInterval(this.hoverAnimation);
             }
             
-            const targetOpacity = hovered ? 0.5 : 0;
+            const targetOpacity = hovered ? 0.8 : 0.3; // Hover más opaco y base más visible
             const currentOpacity = this.visualRing.material.opacity;
             const step = (targetOpacity - currentOpacity) / 10;
-            
-            if (hovered) {
-                this.visualRing.visible = true;
-            }
             
             this.hoverAnimation = setInterval(() => {
                 const newOpacity = this.visualRing.material.opacity + step;
                 
                 if ((step > 0 && newOpacity >= targetOpacity) || (step < 0 && newOpacity <= targetOpacity)) {
                     this.visualRing.material.opacity = targetOpacity;
-                    if (targetOpacity === 0) {
-                        this.visualRing.visible = false;
-                    }
                     clearInterval(this.hoverAnimation);
                     this.hoverAnimation = null;
                 } else {
@@ -805,7 +802,7 @@ export class RealisticPlanet {
         
         if (this.visualRing) {
             if (!visible) {
-                // Ocultar el aro inmediatamente cuando se oculta la UI
+                // Reducir opacidad cuando se oculta la UI pero mantener visible
                 if (this.selectionRingAnimation) {
                     clearInterval(this.selectionRingAnimation);
                     this.selectionRingAnimation = null;
@@ -814,14 +811,16 @@ export class RealisticPlanet {
                     clearInterval(this.hoverAnimation);
                     this.hoverAnimation = null;
                 }
-                this.visualRing.visible = false;
-                this.visualRing.material.opacity = 0;
+                this.visualRing.material.opacity = 0.1; // Muy transparente pero visible
             } else {
-                // Restaurar el aro si el planeta está seleccionado o en hover
+                // Restaurar la opacidad apropiada cuando se muestra la UI
+                this.visualRing.visible = true;
                 if (this.isSelected) {
                     this.showSelectionRingWithFadeIn();
                 } else if (this.isHovered) {
                     this.setHovered(true);
+                } else {
+                    this.visualRing.material.opacity = 0.3; // Opacidad base actualizada
                 }
             }
         }
@@ -852,40 +851,51 @@ export class RealisticPlanet {
     }
     
     updateSelectionRingScale(camera) {
-        // Calcular distancia de la cámara al planeta
         const distance = camera.position.distanceTo(this.group.position);
-        
-        // Usar tamaños fijos uniformes para todos los planetas
-        const minRadius = this.baseRingRadius; // Tamaño mínimo (original del planeta)
-        const maxRadius = 1.0; // Tamaño máximo reducido para todos los planetas
-        const minDistance = 2.0; // Distancia mínima de zoom
-        const maxDistance = 300.0; // Distancia máxima muy aumentada para escalado ultra suave
-        
-        // Interpolación ultra suave con múltiples niveles de suavizado
-        const normalizedDistance = Math.max(0, Math.min(1, (distance - minDistance) / (maxDistance - minDistance)));
-        
-        // Aplicar múltiples funciones de suavizado para un escalado ultra progresivo
-        // 1. Función logarítmica base
-        const logScale = Math.log(1 + normalizedDistance * 19) / Math.log(20); // Escala más suave
-        
-        // 2. Aplicar función de easing cúbica para suavizar aún más
-        const easedScale = logScale * logScale * (3.0 - 2.0 * logScale); // Smoothstep
-        
-        // 3. Reducir exponente drásticamente para cambios casi imperceptibles
-        const finalScale = Math.pow(easedScale, 0.1); // Exponente ultra reducido
-        
-        const scaledRadius = minRadius + (maxRadius - minRadius) * finalScale;
-        
-        // Tanto la esfera de selección como el aro visual usan el mismo tamaño escalado
-        const finalRadius = scaledRadius;
-        
-        // Actualizar geometría de la esfera de selección
+        const apparentSize = 3.0;
+        const baseRadius = distance * apparentSize / 100.0;
+        const planetRadius = this.size * 0.5;
+
+        let finalRadius;
+
+        if (this.isSelected) {
+            // Definir factores de escala y mínimos según el tipo de planeta
+            let scaleFactor, minZoomedInRadius;
+            if (this.data.name === 'Júpiter' || this.data.name === 'Saturno') {
+                // Para gigantes gaseosos, un mínimo más grande y visible
+                scaleFactor = 4.0; // Aumentado para que sea más grande desde lejos
+                minZoomedInRadius = planetRadius * 1.5; // Aumentado para que sea visible en zoom máximo
+            } else {
+                // Para planetas interiores, un mínimo más ajustado pero visible
+                scaleFactor = 3.5; // Aumentado para mayor visibilidad
+                minZoomedInRadius = planetRadius * 1.8; // Aumentado para que no desaparezca en zoom
+            }
+
+            // El radio mínimo dinámico depende del tamaño del planeta y el factor de escala
+            const dynamicMinRadius = planetRadius * scaleFactor;
+
+            // El radio se calcula en función de la distancia, pero nunca es más pequeño que el mínimo de zoom
+            let calculatedRadius = Math.max(baseRadius, minZoomedInRadius);
+
+            // Y tampoco más pequeño que el radio mínimo dinámico general
+            finalRadius = Math.max(calculatedRadius, dynamicMinRadius);
+
+            // Limitar el tamaño máximo para que no sea desproporcionado al alejarse
+            const maxAllowedRadius = planetRadius * 5.0; // Límite superior generoso
+            finalRadius = Math.min(finalRadius, maxAllowedRadius);
+
+        } else {
+            // Lógica para cuando no está seleccionado (comportamiento de tamaño uniforme)
+            const minRadius = Math.max(planetRadius * 1.2, 0.4);
+            const maxRadius = Math.min(baseRadius, 8.0);
+            finalRadius = Math.max(minRadius, maxRadius);
+        }
+
         this.selectionRing.geometry.dispose();
         this.selectionRing.geometry = new THREE.SphereGeometry(finalRadius, 32, 16);
-        
-        // Actualizar geometría del aro visual
+
         this.visualRing.geometry.dispose();
-        this.visualRing.geometry = new THREE.RingGeometry(finalRadius * 0.9, finalRadius, 32);
+        this.visualRing.geometry = new THREE.RingGeometry(finalRadius * 0.85, finalRadius, 32);
     }
     
     getInfo(camera = null, controls = null) {
